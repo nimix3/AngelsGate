@@ -2,7 +2,7 @@
 // Crypto Class Library V.1 By NIMIX3 for VENUS FRAMEWORK
 // IV & KEY Should 16Characters Only
 // NOTE : PLEASE DO NOT EDIT or SELL This CODE FOR COMMERCIAL PURPOSE!
-
+namespace Venus\library\core;
 class Crypto
 {
 	protected $KEY;
@@ -24,7 +24,7 @@ class Crypto
 		return false;
 	}
 
-	public function AdvDecrypt($Cypher,$KEY=NULL,$IV=NULL)
+	public function OldDecrypt($Cypher,$KEY=NULL,$IV=NULL)
 	{
 		if(!isset($KEY) or empty($KEY))
 			$KEY = $this->KEY;
@@ -42,8 +42,123 @@ class Crypto
 			return NULL;
 		}
 	}
-
+	
+	public function MyEncrypt($PlainText,$Mode,$KEY=NULL,$IV=NULL)
+	{
+		if(!isset($KEY) or empty($KEY))
+			$KEY = $this->KEY;
+		if(!isset($IV) or empty($IV))
+			$IV = $this->IV;
+		if(!isset($Mode) or empty($Mode))
+			$Mode = $this->Mode;
+		try{
+			$KEY = base64_decode($KEY);
+			$IV = base64_decode($IV);
+			return base64_encode(openssl_encrypt($PlainText, $Mode, $KEY, OPENSSL_RAW_DATA, $IV));
+		}
+		catch(Exception $ex)
+		{
+			$this->LastError[] = $ex->getMessage();
+			return NULL;
+		}
+	}
+	
+	public function MyDecrypt($Cypher,$Mode,$KEY=NULL,$IV=NULL)
+	{
+		if(!isset($KEY) or empty($KEY))
+			$KEY = $this->KEY;
+		if(!isset($IV) or empty($IV))
+			$IV = $this->IV;
+		if(!isset($Mode) or empty($Mode))
+			$Mode = $this->Mode;
+		try{
+			$KEY = base64_decode($KEY);
+			$IV = base64_decode($IV);
+			$Cypher = base64_decode($Cypher);
+			return openssl_decrypt($Cypher, $Mode, $KEY, OPENSSL_RAW_DATA, $IV);
+		}
+		catch(Exception $ex)
+		{
+			$this->LastError[] = $ex->getMessage();
+			return NULL;
+		}
+	}
+	
+	public function AdvDecrypt($Cypher,$KEY=NULL,$IV=NULL)
+	{
+		if(!isset($KEY) or empty($KEY))
+			$KEY = $this->KEY;
+		if(!isset($IV) or empty($IV))
+			$IV = $this->IV;
+		try{
+			$KEY = base64_decode($KEY);
+			$IV = base64_decode($IV);
+			$Cypher = base64_decode($Cypher);
+			return openssl_decrypt($Cypher, 'AES-128-CBC', $KEY, OPENSSL_RAW_DATA, $IV);
+		}
+		catch(Exception $ex)
+		{
+			$this->LastError[] = $ex->getMessage();
+			return NULL;
+		}
+	}
+	
+	public function HighDecrypt($Cypher,$KEY=NULL,$IV=NULL)
+	{
+		if(!isset($KEY) or empty($KEY))
+			$KEY = $this->KEY;
+		if(!isset($IV) or empty($IV))
+			$IV = $this->IV;
+		try{
+			$KEY = base64_decode($KEY);
+			$IV = base64_decode($IV);
+			$Cypher = base64_decode($Cypher);
+			return openssl_decrypt($Cypher, 'AES-256-CBC', $KEY, OPENSSL_RAW_DATA, $IV);
+		}
+		catch(Exception $ex)
+		{
+			$this->LastError[] = $ex->getMessage();
+			return NULL;
+		}
+	}
+	
 	public function AdvEncrypt($PlainText,$KEY=NULL,$IV=NULL)
+	{
+		if(!isset($KEY) or empty($KEY))
+			$KEY = $this->KEY;
+		if(!isset($IV) or empty($IV))
+			$IV = $this->IV;
+		try{
+			$KEY = base64_decode($KEY);
+			$IV = base64_decode($IV);
+			return base64_encode(openssl_encrypt($PlainText, 'AES-128-CBC', $KEY, OPENSSL_RAW_DATA, $IV));
+		}
+		catch(Exception $ex)
+		{
+			$this->LastError[] = $ex->getMessage();
+			return NULL;
+		}
+	}
+	
+	public function HighEncrypt($PlainText,$KEY=NULL,$IV=NULL)
+	{
+		if(!isset($KEY) or empty($KEY))
+			$KEY = $this->KEY;
+		if(!isset($IV) or empty($IV))
+			$IV = $this->IV;
+		try{
+			$KEY = base64_decode($KEY);
+			$IV = base64_decode($IV);
+			return base64_encode(openssl_encrypt($PlainText, 'AES-256-CBC', $KEY, OPENSSL_RAW_DATA, $IV));
+		}
+		catch(Exception $ex)
+		{
+			$this->LastError[] = $ex->getMessage();
+			return NULL;
+		}
+	}
+
+	public function OldEncrypt($PlainText,$KEY=NULL,$IV=NULL)
 	{
 		if(!isset($KEY) or empty($KEY))
 			$KEY = $this->KEY;
