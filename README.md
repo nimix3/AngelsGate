@@ -20,10 +20,13 @@ AngelsGate high secure communication protocol for cloud-fog data transmissions.
 
  AngelsGate SDK V.1 By NIMIX3 and team for community and it is under MIT license.
  `Cloud-Server:`
-    PHP by @NiMiX3 -> https://github.com/nimix3/AngelsGate/tree/master/Cloud-Server/PHP
+ 
+    PHP by [@NIMIX3](https://github.com/nimix3) -> https://github.com/nimix3/AngelsGate/tree/master/Cloud-Server/PHP
+
 
  `Fog-Client:`
-    Android by @OmidTaheri -> https://github.com/nimix3/AngelsGate/tree/master/Fog-Client/Android
+ 
+    Android by [@OmidTaheri](https://github.com/OmidTaheri) -> https://github.com/nimix3/AngelsGate/tree/master/Fog-Client/Android
 
 
 ### Protocol and SDK documentation:
