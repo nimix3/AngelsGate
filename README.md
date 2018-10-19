@@ -5,9 +5,11 @@ AngelsGate high secure communication protocol for cloud-fog data transmissions.
 ![AngelsGate Logo](https://github.com/nimix3/AngelsGate/blob/master/Documents/en-US/AngelsGateLogo.png "AngelsGate Logo")
 
 
+
 ### Authors:
 
 - @NiMiX3 (Nima Akhlaghi)
+
 
 
 ### Contributors:
@@ -16,17 +18,20 @@ AngelsGate high secure communication protocol for cloud-fog data transmissions.
 - DR. Homa Movahed Nejad
 
 
+
 # AngelsGate Protocol SDK & Library:
 
  AngelsGate SDK V.1 By NIMIX3 and team for community and it is under MIT license.
+
  `Cloud-Server:`
  
-    PHP by [@NIMIX3](https://github.com/nimix3) -> https://github.com/nimix3/AngelsGate/tree/master/Cloud-Server/PHP
+   PHP by [@NIMIX3](https://github.com/nimix3) -> https://github.com/nimix3/AngelsGate/tree/master/Cloud-Server/PHP
 
 
  `Fog-Client:`
  
-    Android by [@OmidTaheri](https://github.com/OmidTaheri) -> https://github.com/nimix3/AngelsGate/tree/master/Fog-Client/Android
+   Android by [@OmidTaheri](https://github.com/OmidTaheri) -> https://github.com/nimix3/AngelsGate/tree/master/Fog-Client/Android
+
 
 
 ### Protocol and SDK documentation:
@@ -36,6 +41,7 @@ Documentation for AngelsGate protocol in english is available here: https://gith
 Documentation for AngelsGate protocol in persian is available here: https://github.com/nimix3/AngelsGate/blob/master/Documents/fa-IR
 
 Documentation for AngelsGate protocol for other languages is available here: https://github.com/nimix3/AngelsGate/blob/master/Documents
+
 
 
 ### Term of use
