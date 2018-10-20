@@ -1,7 +1,7 @@
 <?php
 // Crypto Class Library V.1 By NIMIX3 for VENUS FRAMEWORK
 // NOTE : PLEASE DO NOT EDIT or SELL This CODE FOR COMMERCIAL PURPOSE!
-namespace Venus\library\core;
+
 class Crypto
 {
 	protected $KEY;
