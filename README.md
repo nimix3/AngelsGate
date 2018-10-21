@@ -3,7 +3,7 @@
 AngelsGate high secure communication protocol for cloud-fog data transmissions.
 
 ![AngelsGate Logo](https://github.com/nimix3/AngelsGate/blob/master/Documents/en-US/AngelsGateLogo.png "AngelsGate Logo")
-
+Logo by Dr.Jackol
 
 
 ### Authors:
@@ -16,6 +16,7 @@ AngelsGate high secure communication protocol for cloud-fog data transmissions.
 
 - DR. Mahdi Sharifi
 - DR. Homa Movahed Nejad
+- Omid Taheri
 
 
 
