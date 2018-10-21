@@ -3,20 +3,20 @@
 AngelsGate high secure communication protocol for cloud-fog data transmissions.
 
 ![AngelsGate Logo](https://github.com/nimix3/AngelsGate/blob/master/Documents/en-US/AngelsGateLogo.png "AngelsGate Logo")
-Logo by Dr.Jackol
+Logo by DR.Jackol
 
 
 ### Authors:
 
-- @NiMiX3 (Nima Akhlaghi)
+- [NiMiX3 (Nima Akhlaghi)](https://github.com/nimix3)
 
 
 
 ### Contributors:
 
-- DR. Mahdi Sharifi
+- [DR. Mahdi Sharifi](https://github.com/MMonji96)
 - DR. Homa Movahed Nejad
-- Omid Taheri
+- [Omid Taheri](https://github.com/OmidTaheri)
 
 
 
