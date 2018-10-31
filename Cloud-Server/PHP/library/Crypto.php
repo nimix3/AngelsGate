@@ -18,9 +18,7 @@ class Crypto
 			$this->IV = $CryptConfig['IV'];
 			$this->PRVKEY = $CryptConfig['PRVKEY'];
 			$this->PUBKEY = $CryptConfig['PUBKEY'];
-			return true;
 		}
-		return false;
 	}
 
 	public function OldDecrypt($Cypher,$KEY=NULL,$IV=NULL)
@@ -303,8 +301,8 @@ class Crypto
 			openssl_pkey_export($res, $privKey);
 			$pubKey = openssl_pkey_get_details($res);
 			$pubKey = $pubKey["key"];
-			$this->PRVKEY = $pubKey;
-			$this->PUBKEY = $privKey;
+			$this->PRVKEY = $privKey;
+			$this->PUBKEY = $pubKey;
 			return array('PUBKEY'=>$pubKey,'PRVKEY'=>$privKey);
 		}
 		catch(Exception $ex){
