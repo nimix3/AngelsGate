@@ -19,7 +19,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `AngelsGate`
+-- Database: `AngelsGateV2`
 --
 
 -- --------------------------------------------------------
@@ -31,11 +31,15 @@ SET time_zone = "+00:00";
 CREATE TABLE `AuthTable` (
   `id` bigint(20) NOT NULL,
   `session` varchar(128) DEFAULT NULL,
+  `handler` varchar(128) DEFAULT NULL,
   `token` varchar(128) DEFAULT NULL,
   `cantoken` varchar(128) DEFAULT NULL,
   `timetoken` varchar(32) DEFAULT NULL,
   `time` int(11) DEFAULT NULL,
   `identifier` varchar(256) DEFAULT NULL,
+  `ivr` varchar(64) DEFAULT NULL,
+  `hpub` text,
+  `hpriv` text,
   `endpoint` varchar(256) DEFAULT NULL,
   `pubkey` varchar(2048) DEFAULT NULL,
   `myid` varchar(64) DEFAULT NULL,
