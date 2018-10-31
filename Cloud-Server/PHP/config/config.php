@@ -1,4 +1,5 @@
 <?php
+
 $Configurations = array(
 'server' => 'localhost' ,
 'username' => '' ,
