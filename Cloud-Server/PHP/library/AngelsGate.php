@@ -1,11 +1,11 @@
 <?php
-// AngelsGate V.1 Main class library by NIMIX3
+// AngelsGate V.2 Main class library by NIMIX3
 // https://github.com/nimix3/AngelsGate
 // 2018-2019
-
 class AngelsGate
 {
 	use IPController;
+	use AuthController;
 	use HashController;
 	use TokenController;
 	use ChainController;
@@ -18,6 +18,7 @@ class AngelsGate
 	public $DataRaw;
 	public $Data;
 	public $Deviceid;
+	public $hDeviceid;
 	public $Ssalt;
 	public $Time;
 	public $Seq;
@@ -28,9 +29,11 @@ class AngelsGate
 	public $IP;
 	public $Date;
 	public $Identifier;
-	public $isForward;
-	/* public $Reserved; */
-
+	public $Handler;
+	public $IVR;
+	public $AuthPackage;
+	public $ReturnOnly;
+	
 	public function __construct($ConfFile='config/config.php')
 	{
 		try{
@@ -54,137 +57,175 @@ class AngelsGate
 			return;
 		}
 		catch(Exception $e) {
-			$this->Output('ERROR_SERVER_FATAL','_GLOBAL_',true);
+			$this->RawOutput('ERROR_SERVER_FATAL','_GLOBAL_',true);
 		}
 	}
-
-	public function Signal()
+	
+	public function Signal($InputX=null,$ReturnOnly=false)
 	{
-		if(strtoupper($_SERVER['REQUEST_METHOD']) === 'POST')
-		{
-			$input = file_get_contents("php://input");
-			if(isset($input) and !empty($input))
-			{
-				try{
-					$Crypto = new Crypto();
-					$input = $this->Sdec($input,$this->Config['IV'],$this->Config['KEY']);
-					$input = json_decode($input,true);
-					if(isset($input) and !empty($input))
-					{
-						try{
-							$this->Identifier = $input['Identifier'];
-							$this->DataRaw = $input['Data'];
-							$this->Time = $input['Time'];
-							$this->Signature = $input['Signature'];
-							$this->IP = $_SERVER['REMOTE_ADDR'];
-							$this->Date = $this->Config['Date'];
-							try{
-								//Entry1
-								if(method_exists($this, 'ExtractSignal'))
-								{
-									$Resp = $this->ExtractSignal(new SQLi($this->Config),$this->Identifier);
-									if(isset($Resp) and !empty($Resp))
-									{
-										if(isset($Resp['Deviceid'],$Resp['Token']) and !empty($Resp['Deviceid']) and !empty($Resp['Token']))
-										{
-											$this->Deviceid = $Resp['Deviceid'];
-											$this->Token = $Resp['Token'];
-											$this->DataRaw = $this->Ndec($this->DataRaw,$this->Config['IV'],$this->Config['KEY'],$this->MixFrag($this->Token,$this->Deviceid));
-											if(((time() - intval($this->Time)) > intval($this->Config["TimeLimit"])) or ((intval($this->Time) - time()) > intval($this->Config["TimeLimit"])))
-											{
-												$this->RawOutput('-6',true);
-											}
-											$SigVerify = $this->MSig($this->Deviceid,$this->DataRaw,$this->Time,$this->Token);
-											if($SigVerify != $this->Signature)
-											{
-												$this->RawOutput('-7',true);
-											}
-											if(method_exists($this, 'IPSControl'))
-											{
-												if(! $this->IPSControl(new SQLi($this->Config),$this->IP,$this->Deviceid))
-												{
-													$this->RawOutput('-9',true);
-												}
-											}
-											if($this->Config['compress'])
-											{
-												$this->DataRaw = gzinflate($this->DataRaw);
-											}
-											$this->Data = $this->DeserializeObject($this->DataRaw);
-											return $this;
-										}
-										else
-										{
-											$this->RawOutput('-5',true);
-										}
-									}
-									else
-									{
-										$this->RawOutput('-4',true);
-									}
-								}
-								else
-								{
-									$this->RawOutput('0',true);
-								}
-							}
-							catch(Exception $ex)
-							{
-								$this->RawOutput('-1',true);
-							}
-						}
-						catch(Exception $ex)
-						{
-							$this->RawOutput('-2',true);
-						}
-					}
-					else
-					{
-						$this->RawOutput('-3',true);
-					}
-				}
-				catch(Exception $ex){
-					$this->RawOutput('-8',true);
-				}
-			}
-		}
-		exit();
-	}
-
-	public function Input($InputX=null)
-	{
+		$this->ReturnOnly = boolval($ReturnOnly);
 		if(!isset($InputX) or empty($InputX))
 		{
 			if(strtoupper($_SERVER['REQUEST_METHOD']) === 'POST')
 				$input = file_get_contents("php://input");
 			else
-				$this->Output('ERROR_INPUT_INVALID','_GLOBAL_',true);
+				$this->RawOutput('-12',true);
 		}
 		else
 		{
-			$this->isForward = true;
+			$input = $InputX;
+		}
+		if(isset($input) and !empty($input))
+		{
+			try{
+				$Crypto = new CryptoEx();
+				$input = $this->Sdec($input,$this->Config['IV'],$this->Config['KEY']);
+				$input = json_decode($input,true);
+				if(isset($input) and !empty($input))
+				{
+					try{
+						$this->Identifier = $input['Identifier'];
+						$this->DataRaw = $input['Data'];
+						$this->Time = $input['Time'];
+						$this->Signature = $input['Signature'];
+						$this->IP = $_SERVER['REMOTE_ADDR'];
+						$this->Date = $this->Config['Date'];
+						try{
+							//Entry1
+							if(method_exists($this, 'ExtractSignal'))
+							{
+								$Resp = $this->ExtractSignal(new SQLi($this->Config),$this->Identifier);
+								if(isset($Resp) and !empty($Resp))
+								{
+									if(isset($Resp['Deviceid'],$Resp['Token'],$Resp['IVR']) and !empty($Resp['Deviceid']) and !empty($Resp['Token']) and !empty($Resp['IVR']))
+									{
+										$this->Deviceid = $Resp['Deviceid'];
+										$this->Token = $Resp['Token'];
+										$this->IVR = base64_encode($this->Frag($Resp['IVR'],base64_decode($this->Config['IV'])));
+										$this->DataRaw = $this->Ndec($this->DataRaw,$this->IVR,$this->Config['KEY'],$this->MixFrag($this->Token,$this->Deviceid));
+										if(((time() - intval($this->Time)) > intval($this->Config["TimeLimit"])) or ((intval($this->Time) - time()) > intval($this->Config["TimeLimit"])))
+										{
+											$this->RawOutput('-6',true);
+										}
+										$SigVerify = $this->MSig($this->Deviceid,$this->DataRaw,$this->Time,$this->Token);
+										if($SigVerify != $this->Signature)
+										{
+											$this->RawOutput('-7',true);
+										}
+										if(method_exists($this, 'IPSControl'))
+										{
+											if(! $this->IPSControl(new SQLi($this->Config),$this->IP,$this->Deviceid))
+											{
+												$this->RawOutput('-9',true);
+											}
+										}
+										if($this->Config['compress'])
+										{
+											$this->DataRaw = gzinflate($this->DataRaw);
+										}
+										$this->Data = $this->DeserializeObject($this->DataRaw);
+										return $this;
+									}
+									else
+									{
+										$this->RawOutput('-5',true);
+									}
+								}
+								else
+								{
+									$this->RawOutput('-4',true);
+								}
+							}
+							else
+							{
+								$this->RawOutput('0',true);
+							}
+						}
+						catch(Exception $ex)
+						{
+							$this->RawOutput('-1',true);
+						}
+					}
+					catch(Exception $ex)
+					{
+						$this->RawOutput('-2',true);
+					}
+				}
+				else
+				{
+					$this->RawOutput('-3',true);
+				}
+			}
+			catch(Exception $ex){
+				$this->RawOutput('-8',true);
+			}
+		}
+		exit();
+	}
+	
+	public function Input($InputX=null,$ReturnOnly=false)
+	{
+		$this->ReturnOnly = boolval($ReturnOnly);
+		if(!isset($InputX) or empty($InputX))
+		{
+			if(strtoupper($_SERVER['REQUEST_METHOD']) === 'POST')
+				$input = file_get_contents("php://input");
+			else
+				$this->RawOutput('ERROR_INPUT_INVALID',true);
+		}
+		else
+		{
 			$input = $InputX;
 		}
 		if(!isset($input) or empty($input))
-			$this->Output('ERROR_INPUT_EMPTY','_GLOBAL_',true);
+			$this->RawOutput('ERROR_INPUT_EMPTY',true);
 		try{
-			$Crypto = new Crypto();
+			$Crypto = new CryptoEx();
 			$input = $this->Sdec($input,$this->Config['IV'],$this->Config['KEY']);
 			$input = json_decode($input,true);
 			if(isset($input) and !empty($input))
 			{
 				$this->Request = $input['Request'];
+				$this->Handler = $input['Handler'];
+				$Priv8Key = '';
+				if($this->Request != $this->Config["PreAuthMethod"])
+				{
+					if(method_exists($this, 'InfoHandler'))
+					{
+						$HRes = $this->InfoHandler(new SQLi($this->Config),$this->Handler);
+						if(isset($HRes) and !empty($HRes))
+						{
+							$this->IVR = base64_encode($this->Frag($HRes['IVR'],base64_decode($this->Config['IV'])));
+							$Priv8Key = $HRes['HPriv'];
+							$this->hDeviceid = $HRes['Session'];
+						}
+						else
+						{
+							$this->RawOutput('ERROR_HANDLER_INVALID',true);
+						}
+					}
+					else
+					{
+						$this->IVR = $this->Config['IV'];
+						$Priv8Key = $this->Config['Priv8Key'];
+					}
+				}
+				else
+				{
+					$this->IVR = $this->Config['IV'];
+					$Priv8Key = $this->Config['Priv8Key'];
+				}
 				$this->Signature = $input['Signature'];
 				$this->Seq = $input['Seq'];
 				$this->Time = $input['Time'];
 				$this->Token = $input['Token'];
-				$this->Ssalt = $this->RSAs($input['Ssalt'],$this->Config['Priv8Key']);
+				$this->Ssalt = $this->RSAs($input['Ssalt'],$Priv8Key);
 				if(isset($input['Chain']) and !empty($input['Chain']))
-					$this->Chain = $this->Rdec($input['Chain'],$this->Config['IV'],$this->Config['KEY'],$this->Ssalt);
+					$this->Chain = $this->Rdec($input['Chain'],$this->IVR,$this->Config['KEY'],$this->Ssalt);
 				else
 					$this->Chain = $input['Chain'];
-				$this->Deviceid = $this->Rdec($input['Deviceid'],$this->Config['IV'],$this->Config['KEY'],$this->Ssalt);
-				$this->DataRaw = $this->Rdec($input['Data'],$this->Config['IV'],$this->Config['KEY'],$this->Ssalt);
+				$this->Deviceid = $this->Rdec($input['Deviceid'],$this->IVR,$this->Config['KEY'],$this->Ssalt);
+				$this->DataRaw = $this->Rdec($input['Data'],$this->IVR,$this->Config['KEY'],$this->Ssalt);
 				if($this->Config['compress'])
 				{
 					$this->DataRaw = gzinflate($this->DataRaw);
@@ -195,12 +236,12 @@ class AngelsGate
 			}
 			else
 			{
-				$this->Output('ERROR_INPUT_INVALID','_GLOBAL_',true);
+				$this->RawOutput('ERROR_INPUT_INVALID',true);
 			}
 		}
 		catch(Exception $e)
 		{
-			$this->Output('ERROR_INPUT_UNKNOW','_GLOBAL_',true);
+			$this->RawOutput('ERROR_INPUT_UNKNOW',true);
 		}
 		//Gate0
 		if(method_exists($this, 'IPSControl'))
@@ -213,23 +254,30 @@ class AngelsGate
 		//Gate1
 		if($this->Request != $this->Config["PreAuthMethod"] and $this->Request != $this->Config["PostAuthMethod"])
 		{
-			if(!isset($this->Request,$this->Deviceid,$this->Signature,$this->Seq,$this->Time,$this->Token,$this->Chain,$this->Ssalt,$this->IP) or empty($this->Request) or empty($this->Deviceid) or empty($this->Signature) or empty($this->Seq) or empty($this->Time) or empty($this->Token) or empty($this->Chain) or empty($this->Ssalt) or empty($this->IP))
+			if(!isset($this->Handler,$this->Request,$this->Deviceid,$this->Signature,$this->Seq,$this->Time,$this->Token,$this->Chain,$this->Ssalt,$this->IP) or empty($this->Handler) or empty($this->Request) or empty($this->Deviceid) or empty($this->Signature) or empty($this->Seq) or empty($this->Time) or empty($this->Token) or empty($this->Chain) or empty($this->Ssalt) or empty($this->IP))
 			{
 				$this->Output('ERROR_INPUT_BROKEN',$this->Deviceid,true);
 			}
 		}
 		else
 		{
-			if(!isset($this->Request,$this->Deviceid,$this->Signature,$this->Seq,$this->Time,$this->Ssalt,$this->IP) or empty($this->Request) or empty($this->Deviceid) or empty($this->Signature) or empty($this->Seq) or empty($this->Time) or empty($this->Ssalt) or empty($this->IP))
+			if(!isset($this->Handler,$this->Request,$this->Deviceid,$this->Signature,$this->Seq,$this->Time,$this->Ssalt,$this->IP) or empty($this->Handler) or empty($this->Request) or empty($this->Deviceid) or empty($this->Signature) or empty($this->Seq) or empty($this->Time) or empty($this->Ssalt) or empty($this->IP))
 			{
 				$this->Output('ERROR_INPUT_BROKEN',$this->Deviceid,true);
 			}
 		}
 		//Gate2
-		$SigVerify = $this->CSig($this->Ssalt,$this->Date,$this->Request,$this->DataRaw,$this->Deviceid,$this->Token,$this->Seq,$this->Time,$this->Chain);
+		$SigVerify = $this->CSig($this->Ssalt,$this->Handler,$this->Date,$this->Request,$this->DataRaw,$this->Deviceid,$this->Token,$this->Seq,$this->Time,$this->Chain);
 		if($SigVerify != $this->Signature)
 		{
 			$this->Output('ERROR_INPUT_CRACKED',$this->Deviceid,true);
+		}
+		if(isset($this->hDeviceid) and !empty($this->hDeviceid))
+		{
+			if($this->hDeviceid != $this->Deviceid)
+			{
+				$this->Output('ERROR_INPUT_CRACKED',$this->Deviceid,true);
+			}
 		}
 		//Gate3
 		if((time() - intval($this->Time)) > intval($this->Config["TimeLimit"]) or (intval($this->Time) - time() > intval($this->Config["TimeLimit"])))
@@ -305,32 +353,96 @@ class AngelsGate
 			}
 		}
 		//Window3
-		/*if($this->Request == $this->Config["ForwardMethod"])
+		if($this->Request == $this->Config["PreAuthMethod"])
 		{
-			$Reserved = array(
-			'Request' => $this->Request ,
-			'Deviceid' => $this->Deviceid ,
-			'Signature' => $this->Signature ,
-			'Seq' => $this->Seq ,
-			'Time' => $this->Time ,
-			'Token' => $this->Token ,
-			'Chain' => $this->Chain ,
-			'Ssalt' => $this->Ssalt
-			);
-			$this->Reserved = $Reserved;
-			$Instance = new AngelsGate();
-			$inp = $Instance->Input($this->Data);
-			$this->Request = $inp['Request'];
-			$this->Deviceid = $inp['Deviceid'];
-			$this->Signature = $inp['Signature'];
-			$this->Seq = $inp['Seq'];
-			$this->Time = $inp['Time'];
-			$this->Token = $inp['Token'];
-			$this->Chain = $inp['Chain'];
-			$this->Ssalt = $inp['Ssalt'];
-		}*/
+			if(method_exists($this, 'PreAuth'))
+			{
+				if(isset($this->Data['secret']) and !empty($this->Data['secret']))
+				{
+					$Result = $this->PreAuth(new SQLi($this->Config),new CryptoEx(),$this->Deviceid);
+					if(isset($Result['IVR'],$Result['HPub'],$Result['HPriv'],$Result['Handler']) and !empty($Result['IVR']) and !empty($Result['HPub']) and !empty($Result['HPriv']) and !empty($Result['Handler']))
+					{
+						try{
+							$Crypto = new CryptoEx();
+							$Result['IVR'] = $Crypto->RSAEncrypt($Result['IVR'],$this->CompatibleKey($this->Data['secret']));
+							if(!isset($Result['IVR']) or empty($Result['IVR']))
+								$this->Output('ERROR_AUTH_INVALID',$this->Deviceid,true);
+							$this->AuthPackage = array('ivr'=>$Result['IVR'],'hpub'=>$this->NoHeaderKey($Result['HPub']),'handler'=>$Result['Handler']);
+						}
+						catch(Exception $ex)
+						{
+							$this->Output('ERROR_AUTH_INVALID',$this->Deviceid,true);
+						}
+					}
+					else
+					{
+						$this->Output('ERROR_AUTH_INVALID',$this->Deviceid,true);
+					}
+				}
+				else
+				{
+					$this->Output('ERROR_AUTH_INVALID',$this->Deviceid,true);
+				}
+			}
+		}
 		//Gate7,8,9,10,11,12 on App
 		return $this;
+	}
+	
+	private function CompatibleKey($Input,$Type='PUBLIC')
+	{
+		if($Type == 'PUBLIC')
+		{
+			if(strpos($Input,"-----BEGIN PUBLIC KEY-----") === false)
+			{
+				return '-----BEGIN PUBLIC KEY-----'.PHP_EOL.$Input.PHP_EOL.'-----END PUBLIC KEY-----';
+			}
+			else
+			{
+				return $Input;
+			}
+		}
+		else
+		{
+			if(strpos($Input,"-----BEGIN PRIVATE KEY-----") === false)
+			{
+				return '-----BEGIN PRIVATE KEY-----'.PHP_EOL.$Input.PHP_EOL.'-----END PRIVATE KEY-----';
+			}
+			else
+			{
+				return $Input;
+			}
+		}
+	}
+	
+	private  function NoHeaderKey($Input,$Type='PUBLIC')
+	{
+		if($Type == 'PUBLIC')
+		{
+			if(strpos($Input,"-----BEGIN PUBLIC KEY-----") === false)
+				return $Input;
+			$Input = str_replace("-----BEGIN PUBLIC KEY-----".PHP_EOL,"",$Input);
+			$Input = str_replace("-----BEGIN PUBLIC KEY-----","",$Input);
+			$Input = str_replace(PHP_EOL."-----END PUBLIC KEY-----","",$Input);
+			$Input = str_replace("-----END PUBLIC KEY-----","",$Input);
+			$Input = trim($Input);
+			return $Input;
+		}
+		else
+		{
+			if(strpos($Input,"-----BEGIN PRIVATE KEY-----") === false)
+				return $Input;
+			$Input = str_replace("-----BEGIN PRIVATE KEY-----".PHP_EOL,"",$Input);
+			$Input = str_replace(PHP_EOL."-----END PRIVATE KEY-----","",$Input);
+			$Input = str_replace("-----BEGIN PRIVATE KEY-----","",$Input);
+			$Input = str_replace("-----END PRIVATE KEY-----","",$Input);
+			$Input = str_replace("-----BEGIN RSA PRIVATE KEY-----".PHP_EOL,"",$Input);
+			$Input = str_replace(PHP_EOL."-----END RSA PRIVATE KEY-----","",$Input);
+			$Input = str_replace("-----BEGIN RSA PRIVATE KEY-----","",$Input);
+			$Input = str_replace("-----END RSA PRIVATE KEY-----","",$Input);
+			$Input = trim($Input);
+			return $Input;
+		}
 	}
 	
 	private function SerializeObject($Object)
@@ -389,7 +501,7 @@ class AngelsGate
 	public function Renc($Data,$IVs,$KEYs,$Ss)
 	{
 		try{
-			$Crypto = new Crypto();
+			$Crypto = new CryptoEx();
 			return $Crypto->AdvEncrypt($Data,base64_encode($this->Frag($Ss,base64_decode($KEYs))),$IVs);
 		}
 		catch(Exception $x)
@@ -401,7 +513,7 @@ class AngelsGate
 	private function Rdec($Data,$IVs,$KEYs,$Ss)
 	{
 		try{
-			$Crypto = new Crypto();
+			$Crypto = new CryptoEx();
 			return $Crypto->AdvDecrypt($Data,base64_encode($this->Frag($Ss,base64_decode($KEYs))),$IVs);
 		}
 		catch(Exception $x)
@@ -413,7 +525,7 @@ class AngelsGate
 	private function Nenc($Data,$IVs,$KEYs,$Padding)
 	{
 		try{
-			$Crypto = new Crypto();
+			$Crypto = new CryptoEx();
 			return $Crypto->AdvEncrypt($Data,base64_encode($this->Frag($Padding,base64_decode($KEYs))),$IVs);
 		}
 		catch(Exception $x)
@@ -425,7 +537,7 @@ class AngelsGate
 	private function Ndec($Data,$IVs,$KEYs,$Padding)
 	{
 		try{
-			$Crypto = new Crypto();
+			$Crypto = new CryptoEx();
 			return $Crypto->AdvDecrypt($Data,base64_encode($this->Frag($Padding,base64_decode($KEYs))),$IVs);
 		}
 		catch(Exception $x)
@@ -437,7 +549,7 @@ class AngelsGate
 	private function Senc($Data,$IVs,$KEYs)
 	{
 		try{
-			$Crypto = new Crypto();
+			$Crypto = new CryptoEx();
 			return $Crypto->AdvEncrypt($Data,$KEYs,$IVs);
 		}
 		catch(Exception $x)
@@ -449,7 +561,7 @@ class AngelsGate
 	private function Sdec($Data,$IVs,$KEYs)
 	{
 		try{
-			$Crypto = new Crypto();
+			$Crypto = new CryptoEx();
 			return $Crypto->AdvDecrypt($Data,$KEYs,$IVs);
 		}
 		catch(Exception $x)
@@ -461,7 +573,7 @@ class AngelsGate
 	private function RSAs($Ss,$PrivateKey)
 	{
 		try{
-			$Crypto = new Crypto();
+			$Crypto = new CryptoEx();
 			return $Crypto->RSADecrypt($Ss,$PrivateKey);
 		}
 		catch(Exception $x)
@@ -470,9 +582,9 @@ class AngelsGate
 		}
 	}
 	
-	private function CSig($Ss,$Date,$Request,$Data,$Deviceid,$Token,$Seq,$Time,$Chain)
+	private function CSig($Ss,$Handler,$Date,$Request,$Data,$Deviceid,$Token,$Seq,$Time,$Chain)
 	{
-		return $this->ComputeHash($Ss.$Date.$Request.$Data.$Deviceid.$Token.$Chain.$Seq.$Time,$Ss);
+		return $this->ComputeHash($Ss.$Handler.$Date.$Request.$Data.$Deviceid.$Token.$Chain.$Seq.$Time,$Ss);
 	}
 	
 	private function DSig($Deviceid,$Ss,$Seq)
@@ -490,9 +602,9 @@ class AngelsGate
 		return $this->ComputeHash($Deviceid.$Data.$Time,$Token);
 	}
 	
-	private function SSig($Ss,$Date,$Request,$Data,$Extra,$Deviceid,$Token,$Seq,$Time)
+	private function SSig($Ss,$Handler,$Date,$Request,$Data,$Extra,$Deviceid,$Token,$Seq,$Time)
 	{
-		return $this->ComputeHash($Ss.$Data.$Date.$Seq.$Token.$Time.$Request.$Extra.$Deviceid,$Ss);
+		return $this->ComputeHash($Ss.$Handler.$Data.$Date.$Seq.$Token.$Time.$Request.$Extra.$Deviceid,$Ss);
 	}
 	
 	private function Tokenize($Base,$Salt)
@@ -532,7 +644,6 @@ class AngelsGate
 			$this->RawOutput(time(),true);
 		}
 	}
-
 	public function RawOutput($data,$ex=false)
 	{
 		@ header('Content-type: application/json; charset=utf-8');
@@ -544,8 +655,10 @@ class AngelsGate
 		@ header_remove("Date");
 		@ header_remove("X-Page-Speed");
 		@ header_remove("Cache-Control");
-		//echo json_encode($data,JSON_UNESCAPED_UNICODE);
-		echo $data;
+		if($this->ReturnOnly)
+			return $data;
+		else
+			echo $data;
 		if($ex)
 			exit();
 	}
@@ -560,13 +673,33 @@ class AngelsGate
 			//Making Data
 			if(isset($Data) and !empty($Data))
 			{
+				if(isset($this->AuthPackage) and !empty($this->AuthPackage))
+				{
+					if(is_array($Data))
+					{
+						$Data = array_merge($Data,$this->AuthPackage);
+					}
+					else
+					{
+						$this->AuthPackage['result'] = $Data;
+						$Data = $this->AuthPackage;
+					}
+				}
 				$Data = $this->SerializeObject($Data);
 			}
 			else
 			{
-				$Data = NULL;
+				if(isset($this->AuthPackage) and !empty($this->AuthPackage))
+				{
+					$Data = $this->AuthPackage;
+					$Data = $this->SerializeObject($Data);
+				}
+				else
+				{
+					$Data = NULL;
+				}
 			}
-			$DataFinal = $this->Renc($Data,$this->Config['IV'],$this->Config['KEY'],$this->Ssalt);
+			$DataFinal = $this->Renc($Data,$this->IVR,$this->Config['KEY'],$this->Ssalt);
 			
 			//Making Extra
 			if(isset($Extra) and !empty($Extra))
@@ -577,20 +710,7 @@ class AngelsGate
 			{
 				$Extra = NULL;
 			}
-			$ExtraFinal = $this->Renc($Extra,$this->Config['IV'],$this->Config['KEY'],$this->Ssalt);
-			
-			//Making DeviceVerify
-			/*if($this->Request != $this->Config["PreAuthMethod"])
-			{
-				if(method_exists($this, 'TokenFetch'))
-				{
-					$ownToken = $this->TokenFetch(new SQLi($this->Config),$this->Deviceid);
-				}
-			}
-			else
-			{
-				$ownToken = NULL;
-			}*/
+			$ExtraFinal = $this->Renc($Extra,$this->IVR,$this->Config['KEY'],$this->Ssalt);
 			
 			//Making Token
 			if(method_exists($this, 'TokenGenerator'))
@@ -602,7 +722,6 @@ class AngelsGate
 						$force = true;
 						$set = true;
 						$Token = $this->TokenGenerator(new SQLi($this->Config),NULL,$this->Deviceid,$force,$set);
-						//$ownToken = $Token;
 						if(method_exists($this,'setIdentifier'))
 						{
 							$this->setIdentifier(new SQLi($this->Config),$this->Deviceid);
@@ -624,7 +743,7 @@ class AngelsGate
 						$Token = NULL;
 				}
 			}
-			$TokenFinal = $this->Renc($Token,$this->Config['IV'],$this->Config['KEY'],$this->Ssalt);
+			$TokenFinal = $this->Renc($Token,$this->IVR,$this->Config['KEY'],$this->Ssalt);
 			$DeviceidVerify = $this->DSig($Deviceid,$this->Ssalt,$this->Seq);
 			
 			//Making Seq & Time
@@ -632,7 +751,7 @@ class AngelsGate
 			$Time = time();
 			
 			//Making Signature
-			$Signature = $this->SSig($this->Ssalt,$this->Config['Date'],$this->Request,$Data,$Extra,$Deviceid,$Token,$Seq,$Time);
+			$Signature = $this->SSig($this->Ssalt,$this->Handler,$this->Config['Date'],$this->Request,$Data,$Extra,$Deviceid,$Token,$Seq,$Time);
 			
 			//Creating Final Package
 			$Pack = array(
@@ -660,24 +779,10 @@ class AngelsGate
 			@ header_remove("Date");
 			@ header_remove("X-Page-Speed");
 			@ header_remove("Cache-Control");
-			echo $ResPackFinal;
-			/*if(isset($this->Reserved) and !empty($this->Reserved))
-			{
-				$this->Request = $this->Reserved['Request'];
-				$this->Deviceid = $this->Reserved['Deviceid'];
-				$this->Signature = $this->Reserved['Signature'];
-				$this->Seq = $this->Reserved['Seq'];
-				$this->Time = $this->Reserved['Time'];
-				$this->Token = $this->Reserved['Token'];
-				$this->Chain = $this->Reserved['Chain'];
-				$this->Ssalt = $this->Reserved['Ssalt'];
-				$this->Reserved = NULL;
-				$this->Output($ResPackFinal,$this->Deviceid,true);
-			}
+			if($this->ReturnOnly)
+				return $ResPackFinal;
 			else
-			{
 				echo $ResPackFinal;
-			}*/
 			
 			//Setting Chain
 			if($this->Request != $this->Config["PreAuthMethod"])
@@ -697,7 +802,7 @@ class AngelsGate
 		}
 		catch(Exception $ex)
 		{
-			die('ERROR_SERVER_FATAL');
+			$this->RawOutput('ERROR_SERVER_FATAL',true);
 		}
 	}
 }
