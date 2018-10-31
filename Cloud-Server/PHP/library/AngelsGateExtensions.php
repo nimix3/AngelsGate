@@ -1,5 +1,5 @@
 <?php
-// AngelsGate V.1 Extension class library by NIMIX3
+// AngelsGate V.2 Extension class library by NIMIX3
 // https://github.com/nimix3/AngelsGate
 // 2018-2019
 
@@ -296,7 +296,7 @@ trait ChainController
 			if(isset($resx[0]) and !empty($resx[0]))
 			{
 				$res = $SQL->DeleteDBsecure('ChainTable','session','=','? AND `rlimit` > ? AND `rlimit` < ?',array($Deviceid,0,time()),999999);
-				$SQL->UpdateDBsecure('ChainTable','time','<','? AND `session` = ? AND `rlimit` = ?',array($resx[0]['time'],$Deviceid,0),array('rlimit'=>intval(time()+intval($rlimit))),999999);
+				$SQL->UpdateDBsecure('ChainTable','(`time`','<','? OR `id` < ?) AND `session` = ? AND `rlimit` = ?',array($resx[0]['time'],$resx[0]['id'],$Deviceid,0),array('rlimit'=>intval(time()+intval($rlimit))),999999);
 				if((intval($resx[0]['rlimit']) > 0 and intval($resx[0]['rlimit']) < time()) or $resx[0]['count'] > intval($countlimit))
 				{
 					if($Restrict)
@@ -308,7 +308,7 @@ trait ChainController
 				}
 				else
 				{
-					$SQL->UpdateDBsecure('ChainTable','id','=','? AND `session` = ',array($resx[0]['id'],$Deviceid),array('count'=>intval($resx[0]['count']+1)),1);
+					$SQL->UpdateDBsecure('ChainTable','id','=','? AND `session` = ?',array($resx[0]['id'],$Deviceid),array('count'=>intval($resx[0]['count']+1)),1);
 					return true;
 				}
 			}
@@ -468,7 +468,7 @@ trait SignalController
 			$resx = $SQL->SelectDBsecure('*','AuthTable','identifier','=','?',array($Identifier));
 			if(isset($resx[0]) and !empty($resx[0]))
 			{
-				return array('Deviceid'=>$resx[0]['session'], 'Token'=>$resx[0]['token']);
+				return array('Deviceid'=>$resx[0]['session'], 'Token'=>$resx[0]['token'], 'IVR'=>$resx[0]['ivr']);
 			}
 			else
 			{
@@ -479,6 +479,98 @@ trait SignalController
 		{
 			return null;
 		}
+	}
+}
+
+trait AuthController
+{
+	public function InfoHandler($SQL,$Handler)
+	{
+		if(!isset($SQL,$Handler) or empty($SQL) or empty($Handler))
+			return null;
+		try{
+			if($SQL->InitDB())
+			{
+				$resx = $SQL->SelectDBsecure('*','AuthTable','handler','=','?',array($Handler));
+				if(isset($resx[0]) and !empty($resx[0]))
+				{
+					$SQL->CloseDB();
+					return array('IVR'=>$resx[0]['ivr'],'HPriv'=>$resx[0]['hpriv'],'Session'=>$resx[0]['session']);
+				}
+				else
+				{
+					$SQL->CloseDB();
+					return null;
+				}
+			}
+			else
+			{
+				return null;
+			}
+		}
+		catch(Exception $e)
+		{
+			return null;
+		}
+	}
+	
+	public function PreAuth($SQL,$Crypto,$Deviceid)
+	{
+		if(!isset($SQL,$Deviceid,$Crypto) or empty($SQL) or empty($Deviceid) or empty($Crypto))
+			return null;
+		try{
+			if($SQL->InitDB())
+			{
+				$Handler = $this->GenerateString(rand(22,26));
+				$IVR = $this->GenerateString(16);
+				$HKey = $Crypto->GenKeyPair(2048);
+				if(!isset($HKey) or empty($HKey))
+					return null;
+				$resx = $SQL->SelectDBsecure('*','AuthTable','session','=','?',array($Deviceid));
+				if(isset($resx[0]) and !empty($resx[0]))
+				{
+					$SQL->UpdateDBsecure('AuthTable','session','=','?',array($Deviceid),array('session'=>$Deviceid,'handler'=>$Handler,'ivr'=>$IVR,'hpub'=>$HKey['PUBKEY'],'hpriv'=>$HKey['PRVKEY'],'time'=>time()),1);
+					$SQL->CloseDB();
+				}
+				else
+				{
+					$SQL->InsertDBsecure('AuthTable',array('session'=>$Deviceid,'handler'=>$Handler,'ivr'=>$IVR,'hpub'=>$HKey['PUBKEY'],'hpriv'=>$HKey['PRVKEY'],'time'=>time()));
+					$SQL->CloseDB();
+				}
+				
+				return array('Handler'=>$Handler,'IVR'=>$IVR,'HPub'=>$HKey['PUBKEY'],'HPriv'=>$HKey['PRVKEY']);
+			}
+			else
+			{
+				return null;
+			}
+		}
+		catch(Exception $e)
+		{
+			return null;
+		}
+	}
+	
+	public function GenerateNormalString($length = 20)
+	{
+		$chars =  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.
+				'0123456789';
+		$str = '';
+		$max = strlen($chars) - 1;
+		for ($i=0; $i < $length; $i++)
+			$str .= $chars[mt_rand(0, $max)];
+		return $str;
+	}
+	
+	public function GenerateString($length = 20)
+	{
+		$chars =  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.
+				'0123456789`-=~!@#$%^&*()_+,./<>?;:[]{}|';
+		$str = '';
+		$max = strlen($chars) - 1;
+		for ($i=0; $i < $length; $i++)
+			$str .= $chars[mt_rand(0, $max)];
+		return $str;
 	}
 }
 ?>
