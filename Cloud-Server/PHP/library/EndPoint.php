@@ -1,5 +1,5 @@
 <?php
-// AngelsGate V.1 EndPoint class library by NIMIX3
+// AngelsGate V.2 EndPoint class library by NIMIX3
 // https://github.com/nimix3/AngelsGate
 // 2018-2019
 
@@ -111,7 +111,7 @@ class GlobalApi
 				}
 				else
 				{
-					$SQL->InsertDBsecure('AuthTable',array('session'=>$this->AngelsGate->Deviceid,'time'=>time()));
+					//$SQL->InsertDBsecure('AuthTable',array('session'=>$this->AngelsGate->Deviceid,'time'=>time()));
 					$SQL->CloseDB();
 					$this->AngelsGate->Output('NOTICE_USER_REGISTER',$this->AngelsGate->Deviceid,true);
 				}
