@@ -16,6 +16,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
@@ -85,7 +86,16 @@ public class EncodeRequest {
             try {
 
 
-                String iv = AngelGateConstants.iv;
+                String iv = AngelGateConstants.ServerIv;
+
+
+                if (iv.length() > 0) {
+
+                } else {
+                    iv = AngelGateConstants.iv;
+                }
+
+
                 String secretkey = AngelGateConstants.secretkey;
                 String KeyRotational = EncodeAlgorithmUtils.KeyRotational(Ssalt, secretkey);
 
@@ -130,14 +140,13 @@ public class EncodeRequest {
 
                 }
 
-
                 ModifiedRequestJsonObject.put("Request", Request);
                 ModifiedRequestJsonObject.put("Data", data);
                 ModifiedRequestJsonObject.put("Deviceid", Renc(KeyRotational, iv, DeviceId));
                 ModifiedRequestJsonObject.put("Ssalt", RSA(Ssalt));
                 ModifiedRequestJsonObject.put("Time", timestamp);
                 ModifiedRequestJsonObject.put("Seq", Segment);
-
+                ModifiedRequestJsonObject.put("Handler", AngelGatePreferencesHelper.getHandler(ctx));
 
                 ////////////////////////////////////
 
@@ -186,8 +195,8 @@ public class EncodeRequest {
 
                             if (Request.equals(AngelGateConstants.PreAuthMethodName) || Request.equals(AngelGateConstants.PostAuthMethodName)) {
 
-
-                                String sig = Csig(Ssalt, currentYear, Request, Base64Utils.toBase64(originalRequestJsonObject.toString()),
+                                String handler = ModifiedRequestJsonObject.getString("Handler");
+                                String sig = Csig(Ssalt, handler, currentYear, Request, Base64Utils.toBase64(originalRequestJsonObject.toString()),
                                         DeviceId, "", ChainInSig, Segment, timestamp);
 
 
@@ -198,8 +207,9 @@ public class EncodeRequest {
                             } else {
 
                                 String LastToken = AngelGatePreferencesHelper.getLastToken(ctx);
+                                String handler = ModifiedRequestJsonObject.getString("Handler");
 
-                                String sig = Csig(Ssalt, currentYear, Request, Base64Utils.toBase64(originalRequestJsonObject.toString()),
+                                String sig = Csig(Ssalt, handler, currentYear, Request, Base64Utils.toBase64(originalRequestJsonObject.toString()),
                                         DeviceId, LastToken, ChainInSig, Segment, timestamp);
 
 
@@ -213,8 +223,8 @@ public class EncodeRequest {
 
                             if (Request.equals(AngelGateConstants.PreAuthMethodName) || Request.equals(AngelGateConstants.PostAuthMethodName)) {
 
-
-                                String sig = Csig(Ssalt, currentYear, Request, Base64Utils.toBase64(""),
+                                String handler = ModifiedRequestJsonObject.getString("Handler");
+                                String sig = Csig(Ssalt, handler, currentYear, Request, Base64Utils.toBase64(""),
                                         DeviceId, "", ChainInSig, Segment, timestamp);
 
                                 ModifiedRequestJsonObject.put("Signature", sig);
@@ -224,7 +234,8 @@ public class EncodeRequest {
                             } else {
 
                                 String LastToken = AngelGatePreferencesHelper.getLastToken(ctx);
-                                String sig = Csig(Ssalt, currentYear, Request, Base64Utils.toBase64(""),
+                                String handler = ModifiedRequestJsonObject.getString("Handler");
+                                String sig = Csig(Ssalt,handler, currentYear, Request, Base64Utils.toBase64(""),
                                         DeviceId, LastToken, ChainInSig, Segment, timestamp);
 
                                 ModifiedRequestJsonObject.put("Signature", sig);
@@ -243,8 +254,8 @@ public class EncodeRequest {
 
                             if (Request.equals(AngelGateConstants.PreAuthMethodName) || Request.equals(AngelGateConstants.PostAuthMethodName)) {
 
-
-                                String sig = Csig(Ssalt, currentYear, Request, Base64Utils.toBase64(originalRequestJsonArray.toString()),
+                                String handler = ModifiedRequestJsonObject.getString("Handler");
+                                String sig = Csig(Ssalt, handler, currentYear, Request, Base64Utils.toBase64(originalRequestJsonArray.toString()),
                                         DeviceId, "", ChainInSig, Segment, timestamp);
 
 
@@ -253,9 +264,9 @@ public class EncodeRequest {
 
 
                             } else {
-
+                                String handler = ModifiedRequestJsonObject.getString("Handler");
                                 String LastToken = AngelGatePreferencesHelper.getLastToken(ctx);
-                                String sig = Csig(Ssalt, currentYear, Request, Base64Utils.toBase64(originalRequestJsonArray.toString()),
+                                String sig = Csig(Ssalt, handler, currentYear, Request, Base64Utils.toBase64(originalRequestJsonArray.toString()),
                                         DeviceId, LastToken, ChainInSig, Segment, timestamp);
 
                                 ModifiedRequestJsonObject.put("Signature", sig);
@@ -268,8 +279,8 @@ public class EncodeRequest {
 
                             if (Request.equals(AngelGateConstants.PreAuthMethodName) || Request.equals(AngelGateConstants.PostAuthMethodName)) {
 
-
-                                String sig = Csig(Ssalt, currentYear, Request, Base64Utils.toBase64(""),
+                                String handler = ModifiedRequestJsonObject.getString("Handler");
+                                String sig = Csig(Ssalt, handler, currentYear, Request, Base64Utils.toBase64(""),
                                         DeviceId, "", ChainInSig, Segment, timestamp);
 
 
@@ -279,9 +290,9 @@ public class EncodeRequest {
 
                             } else {
 
-
+                                String handler = ModifiedRequestJsonObject.getString("Handler");
                                 String LastToken = AngelGatePreferencesHelper.getLastToken(ctx);
-                                String sig = Csig(Ssalt, currentYear, Request, Base64Utils.toBase64(""),
+                                String sig = Csig(Ssalt, handler, currentYear, Request, Base64Utils.toBase64(""),
                                         DeviceId, LastToken, ChainInSig, Segment, timestamp);
 
                                 ModifiedRequestJsonObject.put("Signature", sig);
@@ -377,8 +388,18 @@ public class EncodeRequest {
             try {
 
                 String LastToken = AngelGatePreferencesHelper.getLastToken(ctx);
-                String iv = AngelGateConstants.iv;
-                String secretkey = AngelGateConstants.secretkey;
+
+
+                String iv = AngelGateConstants.ServerIv;
+
+
+                if (iv.length() > 0) {
+
+                } else {
+                    iv = AngelGateConstants.iv;
+                }
+
+
                 String KeyRotational = EncodeAlgorithmUtils.SignalKeyRotational(LastToken, DeviceId);
 
 
@@ -534,7 +555,7 @@ public class EncodeRequest {
     }
 
 
-    public static String Csig(String Ss, int date, String Request, String Data, String DeviceId, String Token, String Chain, long Seq, long TimeResponse) throws UnsupportedEncodingException, NoSuchAlgorithmException {
+    public static String Csig(String Ss, String handler, int date, String Request, String Data, String DeviceId, String Token, String Chain, long Seq, long TimeResponse) throws UnsupportedEncodingException, NoSuchAlgorithmException {
 
         String CToken;
         if (Token.length() > 0) {
@@ -543,11 +564,11 @@ public class EncodeRequest {
             CToken = "";
         }
 
-        return EncodeAlgorithmUtils.computeHash(Ss + date + Request + Data + DeviceId + CToken + Chain + Seq + TimeResponse, Ss);
+        return EncodeAlgorithmUtils.computeHash(Ss + handler + date + Request + Data + DeviceId + CToken + Chain + Seq + TimeResponse, Ss);
     }
 
 
-    public static String RSA(String input) throws NoSuchPaddingException, UnsupportedEncodingException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
+    public static String RSA(String input) throws NoSuchPaddingException, UnsupportedEncodingException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
         return RSACrypt.RSAEncrypt(input);
     }
 
