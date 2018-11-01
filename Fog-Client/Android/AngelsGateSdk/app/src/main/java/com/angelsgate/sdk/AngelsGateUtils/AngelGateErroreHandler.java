@@ -20,6 +20,9 @@ public class AngelGateErroreHandler {
     public static final String NOTICE_EXCHANGE_SET = "NOTICE_EXCHANGE_SET";
     public static final String ERROR_INPUT_BADREQUEST = "ERROR_INPUT_BADREQUEST";
 
+    public static final String ERROR_AUTH_INVALID = "ERROR_AUTH_INVALID";
+    public static final String ERROR_HANDLER_INVALID = "ERROR_HANDLER_INVALID";
+
     ////////////////////////////////////////////////////////////////
 
     public static final String SIGNAL_NO_UPDATE = "SIGNAL_NO_UPDATE";
@@ -37,6 +40,7 @@ public class AngelGateErroreHandler {
 
 
     public static boolean ErrorHandler(String respose) {
+
 
         switch (respose) {
             case ERROR_SERVER_FATAL:
@@ -99,6 +103,13 @@ public class AngelGateErroreHandler {
             case ERROR_INPUT_BADREQUEST:
                 return false;
 
+            case ERROR_AUTH_INVALID:
+                return false;
+
+            case ERROR_HANDLER_INVALID:
+                return false;
+
+
             default:
                 return true;
         }
@@ -149,5 +160,42 @@ public class AngelGateErroreHandler {
 
         }
         return "";
+    }
+
+
+
+
+
+
+
+
+    public static boolean StringErrorHandler(String respose) {
+
+        switch (respose) {
+            case ERROR_SERVER_FATAL:
+                return false;
+
+            case ERROR_INPUT_EMPTY:
+                return false;
+
+
+            case ERROR_INPUT_INVALID:
+                return false;
+
+
+            case ERROR_INPUT_UNKNOW:
+                return false;
+
+
+
+            case ERROR_AUTH_INVALID:
+                return false;
+
+            case ERROR_HANDLER_INVALID:
+                return false;
+
+            default:
+                return true;
+        }
     }
 }
