@@ -3,7 +3,6 @@
 AngelsGate high secure communication protocol for cloud-fog data transmissions.
 
 ![AngelsGate Logo](https://github.com/nimix3/AngelsGate/blob/master/Documents/en-US/AngelsGateLogo.png "AngelsGate Logo")
-Logo by DR.Jackol
 
 
 ### Authors:
@@ -22,7 +21,7 @@ Logo by DR.Jackol
 
 # AngelsGate Protocol SDK & Library:
 
- AngelsGate SDK V.1 By NIMIX3 and team for community and it is under MIT license.
+ AngelsGate SDK V.2 By NIMIX3 and team for community and it is under MIT license.
 
  `Cloud-Server:`
  
