@@ -146,4 +146,15 @@ public class EncodeAlgorithmUtils {
     }
 
 
+
+
+
+
+    public static String ServerIvFrag(String newIv, String LastIv) {
+
+        String result = (newIv + LastIv).substring(0, 16);
+
+        return result;
+
+    }
 }
