@@ -1,5 +1,5 @@
 <?php
-// AngelsGate V.1 App webservice by NIMIX3
+// AngelsGate V.2 App webservice by NIMIX3
 // https://github.com/nimix3/AngelsGate
 // 2018-2019
 
