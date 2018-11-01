@@ -3,14 +3,15 @@ package com.angelsgate.sdk.AngelsGateNetwork;
 
 import android.content.Context;
 import android.text.TextUtils;
-import android.widget.Toast;
 
 import com.angelsgate.sdk.AngelsGate;
 import com.angelsgate.sdk.AngelsGateNetwork.model.ExchangeTokenRequest;
+import com.angelsgate.sdk.AngelsGateNetwork.model.PreAuthDataResponse;
 import com.angelsgate.sdk.AngelsGateUtils.AESCrypt;
 import com.angelsgate.sdk.AngelsGateUtils.AngelGateConstants;
 import com.angelsgate.sdk.AngelsGateUtils.Base64Utils;
 import com.angelsgate.sdk.AngelsGateUtils.EncodeAlgorithmUtils;
+import com.angelsgate.sdk.AngelsGateUtils.RSACrypt;
 import com.angelsgate.sdk.AngelsGateUtils.prefs.AngelGatePreferencesHelper;
 import com.angelsgate.sdk.ApiInterface;
 
@@ -41,6 +42,8 @@ public class DecodeResponse {
 
         JSONObject ModifiedResponseJsonObject = null;
         String iv = AngelGateConstants.iv;
+
+
         String secretkey = AngelGateConstants.secretkey;
         String KeyRotational = EncodeAlgorithmUtils.KeyRotational(Ssalt, secretkey);
 
@@ -73,20 +76,30 @@ public class DecodeResponse {
                 AngelGatePreferencesHelper.setLastResponseSignature(Signature, ctx);
                 ///////////////////
 
+
+                String serverIv = AngelGateConstants.ServerIv;
+
+                if (serverIv.length() > 0) {
+                } else {
+                    serverIv = AngelGateConstants.iv;
+                }
+
+
                 if (methodName.equals(AngelGateConstants.PreAuthMethodName)) {
+
 
                 } else if (methodName.equals(AngelGateConstants.PostAuthMethodName)) {
                     String EncryptedToken = "";
                     EncryptedToken = ModifiedResponseJsonObject.get("Token").toString();
 
-                    String Token = Renc(KeyRotational, iv, EncryptedToken);
+                    String Token = Renc(KeyRotational, serverIv, EncryptedToken);
                     AngelGatePreferencesHelper.setLastToken(Token, ctx);
 
                 } else {
 
                     String EncryptedToken = "";
                     EncryptedToken = ModifiedResponseJsonObject.get("Token").toString();
-                    String newToken = Renc(KeyRotational, iv, EncryptedToken);
+                    String newToken = Renc(KeyRotational, serverIv, EncryptedToken);
                     if (newToken != null && newToken.length() > 0) {
                         ExchangeToken(ctx, newToken, mainDeviceId);
                     }
@@ -95,24 +108,56 @@ public class DecodeResponse {
 
                 int currentYear = Calendar.getInstance().get(Calendar.YEAR);
                 ///////
-                String Base64Data = Renc(KeyRotational, iv, EncryptedData);
+                String Base64Data = Renc(KeyRotational, serverIv, EncryptedData);
 
                 String Base64Extra = "";
                 if (EncryptedExtra != null && !TextUtils.isEmpty(EncryptedExtra)) {
-                    Base64Extra = Renc(KeyRotational, iv, EncryptedExtra);
+                    Base64Extra = Renc(KeyRotational, serverIv, EncryptedExtra);
                 }
+
 
                 String Dsig = Dsig(mainDeviceId, Ssalt, Segment);
 
                 //////////////////////////////////////////////////////////////////////////////////
                 String EncryptedToken2 = ModifiedResponseJsonObject.get("Token").toString();
-                String Token = Renc(KeyRotational, iv, EncryptedToken2);
-                String ComputedSignature = Ssig(Ssalt, Base64Data, currentYear, Segment, Token, TimeRes, methodName, Base64Extra, mainDeviceId);
-
+                String Token = Renc(KeyRotational, serverIv, EncryptedToken2);
+                String ComputedSignature = Ssig(Ssalt, AngelGatePreferencesHelper.getHandler(ctx), Base64Data, currentYear, Segment, Token, TimeRes, methodName, Base64Extra, mainDeviceId);
                 boolean checkedAccepted = checkSecurity(Dsig, HashedDeviceid, ComputedSignature, Signature);
 
 
                 if (checkedAccepted) {
+
+                    ///////////////////////////
+
+
+                    if (methodName.equals(AngelGateConstants.PreAuthMethodName)) {
+
+                        String preAuthData = Base64Utils.Base64Decode(Base64Data).toString();
+
+
+                        if (AngelsGate.ErroreHandler(preAuthData)) {
+
+                            PreAuthDataResponse Jsondata = PreAuthDataResponse.JsonToObject(preAuthData);
+                            String Handler = Jsondata.getHandler();
+                            AngelGatePreferencesHelper.setHandler(Handler, ctx);
+
+                            ////
+                            String EncodedServerIv = Jsondata.getIvr();
+
+                            String ServerIv = RSACrypt.RSADecryptByte(Base64Utils.Base64DecodeToByte(EncodedServerIv), AngelGatePreferencesHelper.getPrivateKeyGenerated(ctx));
+                            String ServerIvFrag = EncodeAlgorithmUtils.ServerIvFrag(ServerIv, AngelGateConstants.iv);
+                            AngelGateConstants.ServerIv = ServerIvFrag;
+
+                            String ServerPublicKey = Jsondata.getHpub();
+                            AngelGateConstants.ServerpublicKey = ServerPublicKey;
+
+
+                        } else {
+                            // error
+                        }
+
+                    }
+
                     return Base64Utils.Base64Decode(Base64Data).toString();
 
                 } else {
@@ -137,6 +182,7 @@ public class DecodeResponse {
 
     private static boolean checkSecurity(String Dsig, String HashedDeviceid, String ComputedSignature2, String Signature) {
 
+
         if (!HashedDeviceid.equals(Dsig)) {
             return false;
         }
@@ -155,9 +201,9 @@ public class DecodeResponse {
     }
 
 
-    public static String Ssig(String Ss, String Data, int date, long Seq, String Token, String TimeResponse, String Request, String Extra, String DeviceId) throws UnsupportedEncodingException, NoSuchAlgorithmException {
+    public static String Ssig(String Ss, String handler, String Data, int date, long Seq, String Token, String TimeResponse, String Request, String Extra, String DeviceId) throws UnsupportedEncodingException, NoSuchAlgorithmException {
 
-        return EncodeAlgorithmUtils.computeHash(Ss + Data + date + Seq + Token + TimeResponse + Request + Extra + DeviceId, Ss);
+        return EncodeAlgorithmUtils.computeHash(Ss + handler + Data + date + Seq + Token + TimeResponse + Request + Extra + DeviceId, Ss);
     }
 
 
@@ -195,7 +241,6 @@ public class DecodeResponse {
         final String Request = "Exchange";
         final boolean isArrayRequest = false;
         final ExchangeTokenRequest input = new ExchangeTokenRequest(Tokenize(newToken, Ssalt));
-
 
 
         ///////////////
