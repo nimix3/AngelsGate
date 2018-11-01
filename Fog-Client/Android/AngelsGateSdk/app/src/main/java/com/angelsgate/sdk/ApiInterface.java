@@ -2,6 +2,8 @@ package com.angelsgate.sdk;
 
 
 import com.angelsgate.sdk.AngelsGateNetwork.model.ExchangeTokenRequest;
+import com.angelsgate.sdk.AngelsGateNetwork.model.LogDataRequest;
+import com.angelsgate.sdk.AngelsGateNetwork.model.PreAuthDataRequest;
 import com.angelsgate.sdk.AngelsGateNetwork.model.TestDataRequest;
 
 import okhttp3.ResponseBody;
@@ -18,7 +20,7 @@ public interface ApiInterface {
 
 
     @POST("App.php")
-    Call<ResponseBody> PreAuth(@Header("Timestamp") long timestamp, @Header("DeviceId") String deviceId, @Header("Segment") long segment, @Header("Ssalt") String Ssalt, @Header("Request") String nameMethode, @Header("isArrayResponse") boolean isArrayResponse);
+    Call<ResponseBody> PreAuth(@Header("Timestamp") long timestamp, @Header("DeviceId") String deviceId, @Header("Segment") long segment, @Header("Ssalt") String Ssalt, @Header("Request") String nameMethode, @Header("isArrayResponse") boolean isArrayResponse, @Body PreAuthDataRequest input);
 
 
     @POST("App.php")
@@ -29,14 +31,15 @@ public interface ApiInterface {
 
 
     @POST("App.php")
-    Call<ResponseBody> TestApi(@Header("Timestamp") long timestamp, @Header("DeviceId") String deviceId, @Header("Segment") long segment, @Header("Ssalt") String Ssalt, @Header("Request") String nameMethode, @Header("isArrayResponse") boolean isArrayResponse,@Body TestDataRequest input);
-
+    Call<ResponseBody> TestApi(@Header("Timestamp") long timestamp, @Header("DeviceId") String deviceId, @Header("Segment") long segment, @Header("Ssalt") String Ssalt, @Header("Request") String nameMethode, @Header("isArrayResponse") boolean isArrayResponse, @Body TestDataRequest input);
 
 
     @POST("Signal.php")
-    Call<ResponseBody> signal(@Header("Timestamp") long timestamp, @Header("DeviceId") String deviceId, @Header("Segment") long segment, @Header("Ssalt") String Ssalt, @Header("Request") String nameMethode, @Header("isArrayResponse") boolean isArrayResponse,@Body TestDataRequest input);
+    Call<ResponseBody> signal(@Header("Timestamp") long timestamp, @Header("DeviceId") String deviceId, @Header("Segment") long segment, @Header("Ssalt") String Ssalt, @Header("Request") String nameMethode, @Header("isArrayResponse") boolean isArrayResponse, @Body TestDataRequest input);
 
 
+    @POST("Log.php")
+    Call<ResponseBody> Log(@Body LogDataRequest input);
 
 
 }
