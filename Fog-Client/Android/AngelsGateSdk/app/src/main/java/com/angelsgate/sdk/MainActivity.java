@@ -92,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-        String baseUrl = "https://example.com";
+        String baseUrl = "https://example.com/api";
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
                 .addInterceptor(new EncodeRequestInterceptor(getApplicationContext()))
                 .build();
