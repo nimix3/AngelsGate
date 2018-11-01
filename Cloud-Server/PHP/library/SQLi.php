@@ -24,9 +24,7 @@ class SQLi
 			$this->DBpass = $SQLConfig['password'];
 			$this->DBport = $SQLConfig['port'];
 			$this->DBcharset = $SQLConfig['charset'];
-			return true;
-		}
-		return false;	
+		}	
 	}
 	
 	public function setConfig($SQLConfig)
@@ -117,15 +115,39 @@ class SQLi
 		}
 	}
 	
-	public function StatusDB()
+	public function LastInsertId()
 	{
 		try{
 			if(!$this->DBobj)
 				return false;
-			if(mysqli_ping($this->DBobj))
-				return true;
+			return mysqli_insert_id($this->DBobj);
+		}
+		catch(Exception $ex)
+		{
+			$this->LastError[] = $ex->getMessage();
+			return NULL;
+		}
+	}
+	
+	public function StatusDB($Ping=false)
+	{
+		try{
+			if($Ping)
+			{
+				if(!$this->DBobj)
+					return false;
+				if(mysqli_ping($this->DBobj))
+					return true;
+				else
+					return false;
+			}
 			else
-				return false;
+			{
+				if(isset($this->DBobj) and !empty($this->DBobj))
+					return true;
+				else
+					return false;
+			}
 		}
 		catch(Exception $ex)
 		{
@@ -810,6 +832,28 @@ class SQLi
 			if($this->DBobj)
 			{
 				@ $result = mysqli_query($this->DBobj,$sql);
+				return $result;
+			}
+			else
+				return null;
+		}
+		catch(Exception $ex)
+		{
+			$this->LastError[] = $ex->getMessage();
+			return NULL;
+		}
+	}
+	
+	public function ExecMultiDB($exec)
+	{
+		try{
+			$sql = $exec;
+			$this->DBQuery = $sql;
+			if(!$this->DBobj)
+				$this->InitDB();
+			if($this->DBobj)
+			{
+				@ $result = mysqli_multi_query($this->DBobj,$sql);
 				return $result;
 			}
 			else
