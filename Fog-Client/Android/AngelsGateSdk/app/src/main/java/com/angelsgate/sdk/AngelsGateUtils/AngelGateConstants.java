@@ -28,6 +28,10 @@ public final class AngelGateConstants {
     public static int MaxLengthSsalt;
 
 
+    public static String ServerIv;
+    public static String ServerpublicKey;
+
+
     public static String PreAuthMethodName;
     public static String PostAuthMethodName;
     public static String SignalMethodName;
@@ -40,6 +44,11 @@ public final class AngelGateConstants {
         this.secretkey = builder.secretkey;
         this.MintLengthSsalt = builder.MintLengthSsalt;
         this.MaxLengthSsalt = builder.MaxLengthSsalt;
+
+
+        this.ServerIv = builder.ServerIv;
+        this.ServerpublicKey = builder.ServerpublicKey;
+
 
         this.PreAuthMethodName = builder.PreAuthMethodName;
         this.PostAuthMethodName = builder.PostAuthMethodName;
@@ -55,6 +64,9 @@ public final class AngelGateConstants {
         private String iv = "";
         private String secretkey = "";
         private String publicKey = "";
+
+        private String ServerIv = "";
+        private String ServerpublicKey = "";
 
 
         private int MintLengthSsalt = 8;
