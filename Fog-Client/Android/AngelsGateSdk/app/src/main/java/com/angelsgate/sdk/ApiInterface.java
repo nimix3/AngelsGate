@@ -3,7 +3,6 @@ package com.angelsgate.sdk;
 
 import com.angelsgate.sdk.AngelsGateNetwork.model.ExchangeTokenRequest;
 import com.angelsgate.sdk.AngelsGateNetwork.model.LogDataRequest;
-import com.angelsgate.sdk.AngelsGateNetwork.model.PreAuthDataRequest;
 import com.angelsgate.sdk.AngelsGateNetwork.model.TestDataRequest;
 
 import okhttp3.ResponseBody;
@@ -12,15 +11,12 @@ import retrofit2.http.Body;
 import retrofit2.http.Header;
 import retrofit2.http.POST;
 
-/**
- * Created by om on 10/22/2017.
- */
 
 public interface ApiInterface {
 
 
     @POST("App.php")
-    Call<ResponseBody> PreAuth(@Header("Timestamp") long timestamp, @Header("DeviceId") String deviceId, @Header("Segment") long segment, @Header("Ssalt") String Ssalt, @Header("Request") String nameMethode, @Header("isArrayResponse") boolean isArrayResponse, @Body PreAuthDataRequest input);
+    Call<ResponseBody> PreAuth(@Header("Timestamp") long timestamp, @Header("DeviceId") String deviceId, @Header("Segment") long segment, @Header("Ssalt") String Ssalt, @Header("Request") String nameMethode, @Header("isArrayResponse") boolean isArrayResponse );
 
 
     @POST("App.php")
