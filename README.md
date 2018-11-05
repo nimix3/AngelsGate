@@ -5,6 +5,10 @@ AngelsGate high secure communication protocol for cloud-fog data transmissions.
 ![AngelsGate Logo](https://github.com/nimix3/AngelsGate/blob/master/Documents/en-US/AngelsGateLogo.png "AngelsGate Logo")
 
 
+### Want AngelsGate for Startups or Lightweight Environments?
+Please go to [AngelsGate Lite](https://github.com/nimix3/AngelsGateLite) for lite edition.
+
+
 ### Authors:
 
 - [NiMiX3 (Nima Akhlaghi)](https://github.com/nimix3)
