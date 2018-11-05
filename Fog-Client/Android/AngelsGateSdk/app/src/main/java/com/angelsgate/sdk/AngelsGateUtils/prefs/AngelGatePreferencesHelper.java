@@ -12,11 +12,7 @@ public class AngelGatePreferencesHelper {
     private static final String PREF_KEY_LAST_REQUEST_SIGNATURE = "PREF_KEY_ANGELS_GATE_LAST_REQUEST_SIGNATURE";
     private static final String PREF_KEY_LAST_RESPONSE_SIGNATURE = "PREF_KEY_ANGELS_GATE_LAST_RESPONSE_SIGNATURE";
     private static final String PREF_KEY_SEGMENT = "PREF_KEY_SEGMENT";
-    ///////////////////////
     private static final String PREF_KEY_HANDLER = "PREF_KEY_HANDLER";
-
-    private static final String PREF_KEY_PUBLIC_KEY_GENERATED = "PREF_KEY_PUBLIC_KEY_GENERATED";
-    private static final String PREF_KEY_PRIVATE_KEY_GENERATED = "PREF_KEY_PRIVATE_KEY_GENERATED";
 
 
 
@@ -25,14 +21,8 @@ public class AngelGatePreferencesHelper {
         mPrefs.edit().putString(PREF_KEY_LAST_TOKEN, "").apply();
         mPrefs.edit().putString(PREF_KEY_LAST_REQUEST_SIGNATURE, "").apply();
         mPrefs.edit().putString(PREF_KEY_LAST_RESPONSE_SIGNATURE, "").apply();
-
-        ///
         mPrefs.edit().putLong(PREF_KEY_SEGMENT, 0).apply();
         mPrefs.edit().putString(PREF_KEY_HANDLER, RandomUtils.randomAlphaNumeric(20)).apply();
-        mPrefs.edit().putString(PREF_KEY_PUBLIC_KEY_GENERATED, "").apply();
-        mPrefs.edit().putString(PREF_KEY_PRIVATE_KEY_GENERATED, "").apply();
-
-        /////
         AngelGateConstants.ServerIv="";
         AngelGateConstants.ServerpublicKey="";
 
@@ -90,10 +80,6 @@ public class AngelGatePreferencesHelper {
         mPrefs.edit().putLong(PREF_KEY_SEGMENT, segment).apply();
     }
 
-
-
-
-///////////////////////////////////////
     public static String getHandler(Context context) {
         SharedPreferences mPrefs = context.getSharedPreferences("AngelGatePrefs", Context.MODE_PRIVATE);
         return mPrefs.getString(PREF_KEY_HANDLER, RandomUtils.randomAlphaNumeric(20));
@@ -105,27 +91,4 @@ public class AngelGatePreferencesHelper {
         mPrefs.edit().putString(PREF_KEY_HANDLER, handler).apply();
     }
 
-
-    public static String getPublicKeyGenerated(Context context) {
-        SharedPreferences mPrefs = context.getSharedPreferences("AngelGatePrefs", Context.MODE_PRIVATE);
-        return mPrefs.getString(PREF_KEY_PUBLIC_KEY_GENERATED, "");
-    }
-
-
-    public static void setPublicKeyGenerated(String publickey, Context context) {
-        SharedPreferences mPrefs = context.getSharedPreferences("AngelGatePrefs", Context.MODE_PRIVATE);
-        mPrefs.edit().putString(PREF_KEY_PUBLIC_KEY_GENERATED, publickey).apply();
-    }
-
-
-    public static String getPrivateKeyGenerated(Context context) {
-        SharedPreferences mPrefs = context.getSharedPreferences("AngelGatePrefs", Context.MODE_PRIVATE);
-        return mPrefs.getString(PREF_KEY_PRIVATE_KEY_GENERATED, "");
-    }
-
-
-    public static void setPrivateKeyGenerated(String Private, Context context) {
-        SharedPreferences mPrefs = context.getSharedPreferences("AngelGatePrefs", Context.MODE_PRIVATE);
-        mPrefs.edit().putString(PREF_KEY_PRIVATE_KEY_GENERATED, Private).apply();
-    }
 }
