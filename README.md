@@ -61,7 +61,7 @@ Documentation for AngelsGate protocol for other languages is available here: htt
 ### Contacts 
 
 If you would like to ask a question, you can write to our linkedin or to the github (or both). To contact us via telegram, use our usernames :  
-- @NiMiX3
+- [@NiMiX3](https://linkedin.com/in/nimix3)
 
 
 Best Regards  ;)
