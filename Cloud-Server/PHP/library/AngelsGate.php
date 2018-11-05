@@ -403,6 +403,36 @@ class AngelsGate
 		return $DeSe;
 	}
 	
+	private function NoHeaderKey($Input,$Type='PUBLIC')
+	{
+		if($Type == 'PUBLIC')
+		{
+			if(strpos($Input,"-----BEGIN PUBLIC KEY-----") === false)
+				return $Input;
+			$Input = str_replace("-----BEGIN PUBLIC KEY-----".PHP_EOL,"",$Input);
+			$Input = str_replace("-----BEGIN PUBLIC KEY-----","",$Input);
+			$Input = str_replace(PHP_EOL."-----END PUBLIC KEY-----","",$Input);
+			$Input = str_replace("-----END PUBLIC KEY-----","",$Input);
+			$Input = trim($Input);
+			return $Input;
+		}
+		else
+		{
+			if(strpos($Input,"-----BEGIN PRIVATE KEY-----") === false)
+				return $Input;
+			$Input = str_replace("-----BEGIN PRIVATE KEY-----".PHP_EOL,"",$Input);
+			$Input = str_replace(PHP_EOL."-----END PRIVATE KEY-----","",$Input);
+			$Input = str_replace("-----BEGIN PRIVATE KEY-----","",$Input);
+			$Input = str_replace("-----END PRIVATE KEY-----","",$Input);
+			$Input = str_replace("-----BEGIN RSA PRIVATE KEY-----".PHP_EOL,"",$Input);
+			$Input = str_replace(PHP_EOL."-----END RSA PRIVATE KEY-----","",$Input);
+			$Input = str_replace("-----BEGIN RSA PRIVATE KEY-----","",$Input);
+			$Input = str_replace("-----END RSA PRIVATE KEY-----","",$Input);
+			$Input = trim($Input);
+			return $Input;
+		}
+	}
+	
 	private function ComputeHash($text,$salt)
 	{
 		if(strlen($salt) % 2 == 0)
