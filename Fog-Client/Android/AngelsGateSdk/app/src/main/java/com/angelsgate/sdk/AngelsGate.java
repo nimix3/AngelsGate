@@ -34,12 +34,6 @@ public class AngelsGate {
     }
 
 
-    public static String GenPublicKey(Context ctx) {
-        RSACrypt.GenerateRsaKey(ctx);
-        return AngelGatePreferencesHelper.getPublicKeyGenerated(ctx);
-    }
-
-
     public static String DecodeResponse(String encryptedString, String Ssalt, String mainDeviceId, String methodName, Context ctx) throws GeneralSecurityException {
         return DecodeResponse.decode(encryptedString, Ssalt, mainDeviceId, methodName, ctx);
     }
