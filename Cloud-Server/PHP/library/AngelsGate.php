@@ -357,24 +357,16 @@ class AngelsGate
 		{
 			if(method_exists($this, 'PreAuth'))
 			{
-				if(isset($this->Data['secret']) and !empty($this->Data['secret']))
+				$Result = $this->PreAuth(new SQLi($this->Config),new CryptoEx(),$this->Deviceid);
+				if(isset($Result['IVR'],$Result['HPub'],$Result['HPriv'],$Result['Handler']) and !empty($Result['IVR']) and !empty($Result['HPub']) and !empty($Result['HPriv']) and !empty($Result['Handler']))
 				{
-					$Result = $this->PreAuth(new SQLi($this->Config),new CryptoEx(),$this->Deviceid);
-					if(isset($Result['IVR'],$Result['HPub'],$Result['HPriv'],$Result['Handler']) and !empty($Result['IVR']) and !empty($Result['HPub']) and !empty($Result['HPriv']) and !empty($Result['Handler']))
-					{
-						try{
-							$Crypto = new CryptoEx();
-							$Result['IVR'] = $Crypto->RSAEncrypt($Result['IVR'],$this->CompatibleKey($this->Data['secret']));
-							if(!isset($Result['IVR']) or empty($Result['IVR']))
-								$this->Output('ERROR_AUTH_INVALID',$this->Deviceid,true);
-							$this->AuthPackage = array('ivr'=>$Result['IVR'],'hpub'=>$this->NoHeaderKey($Result['HPub']),'handler'=>$Result['Handler']);
-						}
-						catch(Exception $ex)
-						{
+					try{
+						$Crypto = new CryptoEx();
+						if(!isset($Result['IVR']) or empty($Result['IVR']))
 							$this->Output('ERROR_AUTH_INVALID',$this->Deviceid,true);
-						}
+						$this->AuthPackage = array('ivr'=>$Result['IVR'],'hpub'=>$this->NoHeaderKey($Result['HPub']),'handler'=>$Result['Handler']);
 					}
-					else
+					catch(Exception $ex)
 					{
 						$this->Output('ERROR_AUTH_INVALID',$this->Deviceid,true);
 					}
@@ -387,62 +379,6 @@ class AngelsGate
 		}
 		//Gate7,8,9,10,11,12 on App
 		return $this;
-	}
-	
-	private function CompatibleKey($Input,$Type='PUBLIC')
-	{
-		if($Type == 'PUBLIC')
-		{
-			if(strpos($Input,"-----BEGIN PUBLIC KEY-----") === false)
-			{
-				return '-----BEGIN PUBLIC KEY-----'.PHP_EOL.$Input.PHP_EOL.'-----END PUBLIC KEY-----';
-			}
-			else
-			{
-				return $Input;
-			}
-		}
-		else
-		{
-			if(strpos($Input,"-----BEGIN PRIVATE KEY-----") === false)
-			{
-				return '-----BEGIN PRIVATE KEY-----'.PHP_EOL.$Input.PHP_EOL.'-----END PRIVATE KEY-----';
-			}
-			else
-			{
-				return $Input;
-			}
-		}
-	}
-	
-	private  function NoHeaderKey($Input,$Type='PUBLIC')
-	{
-		if($Type == 'PUBLIC')
-		{
-			if(strpos($Input,"-----BEGIN PUBLIC KEY-----") === false)
-				return $Input;
-			$Input = str_replace("-----BEGIN PUBLIC KEY-----".PHP_EOL,"",$Input);
-			$Input = str_replace("-----BEGIN PUBLIC KEY-----","",$Input);
-			$Input = str_replace(PHP_EOL."-----END PUBLIC KEY-----","",$Input);
-			$Input = str_replace("-----END PUBLIC KEY-----","",$Input);
-			$Input = trim($Input);
-			return $Input;
-		}
-		else
-		{
-			if(strpos($Input,"-----BEGIN PRIVATE KEY-----") === false)
-				return $Input;
-			$Input = str_replace("-----BEGIN PRIVATE KEY-----".PHP_EOL,"",$Input);
-			$Input = str_replace(PHP_EOL."-----END PRIVATE KEY-----","",$Input);
-			$Input = str_replace("-----BEGIN PRIVATE KEY-----","",$Input);
-			$Input = str_replace("-----END PRIVATE KEY-----","",$Input);
-			$Input = str_replace("-----BEGIN RSA PRIVATE KEY-----".PHP_EOL,"",$Input);
-			$Input = str_replace(PHP_EOL."-----END RSA PRIVATE KEY-----","",$Input);
-			$Input = str_replace("-----BEGIN RSA PRIVATE KEY-----","",$Input);
-			$Input = str_replace("-----END RSA PRIVATE KEY-----","",$Input);
-			$Input = trim($Input);
-			return $Input;
-		}
 	}
 	
 	private function SerializeObject($Object)
@@ -779,10 +715,6 @@ class AngelsGate
 			@ header_remove("Date");
 			@ header_remove("X-Page-Speed");
 			@ header_remove("Cache-Control");
-			if($this->ReturnOnly)
-				return $ResPackFinal;
-			else
-				echo $ResPackFinal;
 			
 			//Setting Chain
 			if($this->Request != $this->Config["PreAuthMethod"])
@@ -796,6 +728,12 @@ class AngelsGate
 				}
 			}
 			
+			// Output
+			if($this->ReturnOnly)
+				return $ResPackFinal;
+			else
+				echo $ResPackFinal;
+
 			//Terminate
 			if($ex)
 				exit();
