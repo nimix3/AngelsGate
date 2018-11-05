@@ -1,36 +1,18 @@
 package com.angelsgate.sdk;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
 import com.angelsgate.sdk.AngelsGateNetwork.EncodeRequestInterceptor;
-import com.angelsgate.sdk.AngelsGateNetwork.model.LogDataRequest;
-import com.angelsgate.sdk.AngelsGateNetwork.model.PreAuthDataRequest;
 import com.angelsgate.sdk.AngelsGateNetwork.model.TestDataRequest;
 import com.angelsgate.sdk.AngelsGateUtils.AngelGateConstants;
-import com.angelsgate.sdk.AngelsGateUtils.Base64Utils;
-import com.angelsgate.sdk.AngelsGateUtils.RSACrypt;
 import com.angelsgate.sdk.AngelsGateUtils.RandomUtils;
 import com.angelsgate.sdk.AngelsGateUtils.prefs.AngelGatePreferencesHelper;
-import com.hypertrack.hyperlog.HyperLog;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.util.concurrent.TimeUnit;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 
 import okhttp3.OkHttpClient;
 import okhttp3.ResponseBody;
@@ -57,11 +39,12 @@ public class MainActivity extends AppCompatActivity {
         Button signal_button = (Button) findViewById(R.id.signal);
 
 
+        final String deviceId = RandomUtils.randomAlphaNumeric(30);
 
         preAuth_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                preAuth();
+                preAuth(deviceId);
             }
         });
 
@@ -69,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
         postAuth_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                postAuth();
+                postAuth(deviceId);
             }
         });
 
@@ -77,19 +60,16 @@ public class MainActivity extends AppCompatActivity {
         test_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                test();
+                test(deviceId);
             }
         });
 
         signal_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                signal();
+                signal(deviceId);
             }
         });
-
-
-
 
 
         String baseUrl = "https://example.com/api";
@@ -112,8 +92,7 @@ public class MainActivity extends AppCompatActivity {
 
         String iv = "";
         String SecretKey = "";
-        String PublicKey = "";
-
+        String PublicKey ="";
 
 
         AngelGateConstants angel = new AngelGateConstants.AngelGateConstantsBuilder(
@@ -199,7 +178,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void preAuth() {
+    public void preAuth( String deviceId) {
 
         AngelGatePreferencesHelper.ResetAllData(MainActivity.this);
         ///PreAuth
@@ -209,14 +188,10 @@ public class MainActivity extends AppCompatActivity {
         final long TimeStamp = AngelsGate.CreatTimeStamp();
         final String Request = "PreAuth";
         boolean isArrayRequest = false;
-        final String DeviceId = "123456";
+        final String DeviceId = deviceId;
 
 
-        PreAuthDataRequest input = new PreAuthDataRequest(AngelsGate.GenPublicKey(MainActivity.this));
-
-
-
-        Call<ResponseBody> callback = apiInterface.PreAuth(TimeStamp, DeviceId, segment, Ssalt, Request, isArrayRequest, input);
+        Call<ResponseBody> callback = apiInterface.PreAuth(TimeStamp, DeviceId, segment, Ssalt, Request, isArrayRequest);
         callback.enqueue(new Callback<ResponseBody>() {
 
 
@@ -226,7 +201,7 @@ public class MainActivity extends AppCompatActivity {
 
                 if (response.isSuccessful()) {
 
-
+                  
                     String bodyResponse = null;
                     try {
                         bodyResponse = response.body().string();
@@ -236,7 +211,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     try {
 
-
+                      
                         if (AngelsGate.StringErroreHandler(bodyResponse)) {
 
                             String data_response = AngelsGate.DecodeResponse(bodyResponse, Ssalt, DeviceId, Request, MainActivity.this);
@@ -244,7 +219,6 @@ public class MainActivity extends AppCompatActivity {
                             AngelsGate.ErroreHandler(data_response);
 
                         } else {
-
 
 
                         }
@@ -256,21 +230,21 @@ public class MainActivity extends AppCompatActivity {
 
 
                 } else {
-
+                    System.out.println("preAuth error" );
                 }
 
             }
 
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
-
+                System.out.println("preAuth error222" );
             }
         });
 
 
     }
 
-    public void postAuth() {
+    public void postAuth( String deviceId) {
 
         ////PostAuth
         ////RequestHeader
@@ -279,7 +253,7 @@ public class MainActivity extends AppCompatActivity {
         final long TimeStamp2 = AngelsGate.CreatTimeStamp();
         final String Request2 = "PostAuth";
         boolean isArrayRequest2 = false;
-        final String DeviceId2 = "123456";
+        final String DeviceId2 = deviceId;
 
 
         Call<ResponseBody> callback2 = apiInterface.PostAuth(TimeStamp2, DeviceId2, segment2, Ssalt2, Request2, isArrayRequest2);
@@ -310,7 +284,6 @@ public class MainActivity extends AppCompatActivity {
                         } else {
 
 
-
                         }
 
 
@@ -332,7 +305,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void test() {
+    public void test( String deviceId) {
         ///TestApi
         ////RequestHeader
         final long segment3 = AngelsGate.CreatSegment(MainActivity.this);
@@ -340,13 +313,9 @@ public class MainActivity extends AppCompatActivity {
         final long TimeStamp3 = AngelsGate.CreatTimeStamp();
         final String Request3 = "checkUpdate";
         boolean isArrayRequest3 = false;
-        final String DeviceId3 = "123456";
+        final String DeviceId3 = deviceId;
 
         TestDataRequest input = new TestDataRequest("hello");
-
-
-
-
 
         Call<ResponseBody> callback3 = apiInterface.TestApi(TimeStamp3, DeviceId3, segment3, Ssalt3, Request3, isArrayRequest3, input);
         callback3.enqueue(new Callback<ResponseBody>() {
@@ -378,7 +347,6 @@ public class MainActivity extends AppCompatActivity {
                         } else {
 
 
-
                         }
 
 
@@ -399,11 +367,10 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-
     }
 
 
-    public void signal() {
+    public void signal( String deviceId) {
         ///signal
         ////RequestHeader
         final long segment4 = AngelsGate.CreatSegment(MainActivity.this);
@@ -411,10 +378,9 @@ public class MainActivity extends AppCompatActivity {
         final long TimeStamp4 = AngelsGate.CreatTimeStamp();
         final String Request4 = AngelGateConstants.SignalMethodName;
         boolean isArrayRequest4 = false;
-        final String DeviceId4 = "123456";
+        final String DeviceId4 = deviceId;
 
         TestDataRequest input = new TestDataRequest("HELLO");
-
 
 
         Call<ResponseBody> callback3 = apiInterface.signal(TimeStamp4, DeviceId4, segment4, Ssalt4, Request4, isArrayRequest4, input);
@@ -430,9 +396,6 @@ public class MainActivity extends AppCompatActivity {
                     String bodyResponse = null;
                     try {
                         bodyResponse = response.body().string();
-
-
-
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -468,86 +431,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-
-
-
     }
 
 
-//    public void log() {
-//
-//
-//        File file = HyperLog.getDeviceLogsInFile(this);
-//
-//
-//        //Read text from file
-//        StringBuilder text = new StringBuilder();
-//
-//        try {
-//            BufferedReader br = new BufferedReader(new FileReader(file));
-//            String line;
-//
-//            while ((line = br.readLine()) != null) {
-//                text.append(line);
-//                text.append('\n');
-//            }
-//            br.close();
-//        } catch (IOException e) {
-//            //You'll need to add proper error handling here
-//        }
-//
-//
-//        PushLog(Base64Utils.toBase64(text.toString()));
-//
-//
-//    }
-
-//
-//    public static void PushLog(String data) {
-//
-//
-//        OkHttpClient okHttpClient = new OkHttpClient.Builder()
-//                .readTimeout(60, TimeUnit.SECONDS)
-//                .writeTimeout(60, TimeUnit.SECONDS)
-//                .connectTimeout(60, TimeUnit.SECONDS)
-//                .build();
-//
-//
-//        Retrofit retrofit = new Retrofit.Builder()
-//                .baseUrl(AngelGateConstants.RetrofiteBaseUrl + "/")
-//                .client(okHttpClient)
-//                .addConverterFactory(GsonConverterFactory.create())
-//                .build();
-//
-//
-//        final ApiInterface apiInterface = retrofit.create(ApiInterface.class);
-//
-//
-//        ////RequestHeader
-//
-//        final LogDataRequest input = new LogDataRequest(data);
-//        ///////////////
-//        Call<ResponseBody> callback = apiInterface.Log(input);
-//        callback.enqueue(new Callback<ResponseBody>() {
-//
-//
-//            @Override
-//            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-//
-//                if (response.isSuccessful()) {
-//
-//                } else {
-//                    //error
-//                }
-//
-//            }
-//
-//            @Override
-//            public void onFailure(Call<ResponseBody> call, Throwable t) {
-//
-//            }
-//        });
-//
-//
-//    }
 }
