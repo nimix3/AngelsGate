@@ -11,7 +11,6 @@ import com.angelsgate.sdk.AngelsGateUtils.AESCrypt;
 import com.angelsgate.sdk.AngelsGateUtils.AngelGateConstants;
 import com.angelsgate.sdk.AngelsGateUtils.Base64Utils;
 import com.angelsgate.sdk.AngelsGateUtils.EncodeAlgorithmUtils;
-import com.angelsgate.sdk.AngelsGateUtils.RSACrypt;
 import com.angelsgate.sdk.AngelsGateUtils.prefs.AngelGatePreferencesHelper;
 import com.angelsgate.sdk.ApiInterface;
 
@@ -141,10 +140,7 @@ public class DecodeResponse {
                             String Handler = Jsondata.getHandler();
                             AngelGatePreferencesHelper.setHandler(Handler, ctx);
 
-                            ////
-                            String EncodedServerIv = Jsondata.getIvr();
-
-                            String ServerIv = RSACrypt.RSADecryptByte(Base64Utils.Base64DecodeToByte(EncodedServerIv), AngelGatePreferencesHelper.getPrivateKeyGenerated(ctx));
+                            String ServerIv = Jsondata.getIvr();
                             String ServerIvFrag = EncodeAlgorithmUtils.ServerIvFrag(ServerIv, AngelGateConstants.iv);
                             AngelGateConstants.ServerIv = ServerIvFrag;
 
@@ -242,8 +238,6 @@ public class DecodeResponse {
         final boolean isArrayRequest = false;
         final ExchangeTokenRequest input = new ExchangeTokenRequest(Tokenize(newToken, Ssalt));
 
-
-        ///////////////
         Call<ResponseBody> callback = apiInterface.Exchange(TimeStamp, DeviceId, segment, Ssalt, Request, isArrayRequest, input);
         callback.enqueue(new Callback<ResponseBody>() {
 
