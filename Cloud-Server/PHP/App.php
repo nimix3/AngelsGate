@@ -3,7 +3,7 @@
 // https://github.com/nimix3/AngelsGate
 // 2018-2019
 
-require_once( dirname( __FILE__ ) . '/library/Crypto.php' );
+require_once( dirname( __FILE__ ) . '/library/CryptoEx.php' );
 require_once( dirname( __FILE__ ) . '/library/SQLi.php' );
 require_once( dirname( __FILE__ ) . '/library/AngelsGateExtensions.php' );
 require_once( dirname( __FILE__ ) . '/library/AngelsGate.php' );
