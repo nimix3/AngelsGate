@@ -1,6 +1,6 @@
 <?php
-// SQLi Class Library V.1 By NIMIX3 for VENUS FRAMEWORK
-// NOTE : PLEASE DO NOT EDIT or SELL This CODE FOR COMMERCIAL PURPOSE!
+// SQLi Class Library V.1 By NIMIX3 for VENUS FRAMEWORK that is Under MIT License.
+// NOTE: PLEASE DO NOT EDIT OR SELL THIS CODE FOR COMMERCIAL PURPOSE EXCEPT REFER TO VENUS FRAMEWORK IN YOUR PRODUCT!
 
 class SQLi
 {
@@ -173,6 +173,40 @@ class SQLi
 		}
 	}
 	
+	public function RecordDB()
+	{
+		try{
+			if(!isset($this->DBobj) or empty($this->DBobj))
+				return false;
+			if(mysqli_begin_transaction($this->DBobj,MYSQLI_TRANS_START_READ_WRITE))
+				return true;
+			else
+				return false;
+		}
+		catch(Exception $ex)
+		{
+			$this->LastError[] = $ex->getMessage();
+			return false;
+		}
+	}
+	
+	public function CommitDB()
+	{
+		try{
+			if(!isset($this->DBobj) or empty($this->DBobj))
+				return false;
+			if(mysqli_commit($this->DBobj))
+				return true;
+			else
+				return false;
+		}
+		catch(Exception $ex)
+		{
+			$this->LastError[] = $ex->getMessage();
+			return false;
+		}
+	}
+	
 	public function RollBackDB()
 	{
 		try{
@@ -241,39 +275,13 @@ class SQLi
 		}
 	}
 	
-	public function SecureDBQuery($str,$dbc)
+	public function SecureDBQuery($str,$dbc=true)
 	{
 		try{
 			if($dbc !== true)
 			{
-				$str = str_replace('(','',$str);
-				$str = str_replace(')','',$str);
-				$str = str_replace('[','',$str);
-				$str = str_replace(']','',$str);
-				$str = str_replace('{','',$str);
-				$str = str_replace('}','',$str);
-				$str = str_replace('*','',$str);
-				$str = str_replace('?','',$str);
-				$str = str_replace('!','',$str);
-				$str = str_replace(';','',$str);
-				$str = str_replace('&','',$str);
-				$str = str_replace('%','',$str);
-				$str = str_replace('-','',$str);
-				$str = str_replace('_','',$str);
-				$str = str_replace("'",'',$str);
-				$str = str_replace(':"','',$str);
-				$str = str_replace('~','',$str);
-				$str = str_replace('`','',$str);
-				$str = str_replace('@','',$str);
-				$str = str_replace('^','',$str);
-				$str = str_replace('=','',$str);
-				$str = str_replace('|','',$str);
-				$str = str_replace('<','',$str);
-				$str = str_replace('>','',$str);
-				$str = str_replace('/','',$str);
-				$str = str_replace('\\','',$str);
-				$str = str_replace('+','',$str);
-				$str = str_replace('.','',$str);	
+				$str = str_replace(array('(',')','[',']','{','}','*','?','!',';','&','%','-','_',"'",':"','/','\\','~','.','+','`','@','^','=','|','>','<'),'',$str);
+				$str = str_replace(array("\\",  "\x00", "\n",  "\r",  "'",  '"', "\x1a"), array("\\\\","\\0","\\n", "\\r", "\'", '\"', "\\Z"), $str);
 			}
 			if($this->StatusDB())
 			{
@@ -343,6 +351,11 @@ class SQLi
 			if($this->StatusDB())
 			{
 				$stmt = mysqli_prepare($this->DBobj,$sql);
+				if($stmt === false)
+				{
+					$this->LastError[] = "Prepare error";
+					return false;
+				}
 				$params = array();
 				$types  = array_reduce($vars, function ($string, &$arg) use (&$params) {
 					$params[] = &$arg;
@@ -354,7 +367,8 @@ class SQLi
 				}, '');
 				array_unshift($params , $types);
 				array_unshift($params , $stmt);
-				call_user_func_array("mysqli_stmt_bind_param",$params);
+				//@ call_user_func_array("mysqli_stmt_bind_param",$params);
+				mysqli_stmt_bind_param($stmt,$types,...array_values($vars));
 				mysqli_stmt_execute($stmt);
 				$res = null;
 				if(function_exists('mysqli_stmt_get_result'))
@@ -414,15 +428,17 @@ class SQLi
 				if(!$result)
 					return false;
 				else
-					return true;
+					return $result;
 			}
 			else
+			{
 				return false;
+			}
 		}
 		catch(Exception $ex)
 		{
 			$this->LastError[] = $ex->getMessage();
-			return NULL;
+			return false;
 		}
 	}
 	
@@ -436,8 +452,7 @@ class SQLi
 			$d = "";
 			foreach($data as $key => $val)
 			{
-				@ $val = str_replace("'","''",$val);
-				$d .= '`'.$key.'`="'.$val.'",';
+				$d .= '`'.$key.'`=?,';
 			}
 			$d = trim($d, ",");
 			$sql = "UPDATE `$table` SET ".$d." WHERE ".$where.$sign.$statement." LIMIT ".$limit;
@@ -446,7 +461,16 @@ class SQLi
 				$this->InitDB();
 			if($this->DBobj)
 			{
+				if(is_array($data))
+				{
+					$vars = array_merge($data,$vars);
+				}
 				$stmt = mysqli_prepare($this->DBobj,$sql);
+				if($stmt === false)
+				{
+					$this->LastError[] = "Prepare error";
+					return false;
+				}
 				$params = array();
 				$types  = array_reduce($vars, function ($string, &$arg) use (&$params) {
 					$params[] = &$arg;
@@ -458,27 +482,31 @@ class SQLi
 				}, '');
 				array_unshift($params , $types);
 				array_unshift($params , $stmt);
-				call_user_func_array("mysqli_stmt_bind_param",$params);
+				//@ call_user_func_array("mysqli_stmt_bind_param",$params);
+				mysqli_stmt_bind_param($stmt,$types,...array_values($vars));
 				mysqli_stmt_execute($stmt);
-				if(function_exists('mysqli_stmt_get_result'))
-					@ $result = mysqli_stmt_get_result($stmt);
-				else
-					@ $result = $this->mysqlo_stmt_get_result($stmt);
-				@ mysqli_stmt_free_result($stmt);
-				@ mysqli_free_result($result);
-				mysqli_stmt_close($stmt);
-				if(!isset($result))
+				if(mysqli_stmt_affected_rows($stmt) <= 0)
+				{
+					@ mysqli_stmt_free_result($stmt);
+					mysqli_stmt_close($stmt);
 					return false;
+				}
 				else
+				{
+					@ mysqli_stmt_free_result($stmt);
+					mysqli_stmt_close($stmt);
 					return true;
+				}
 			}
 			else
+			{
 				return false;
+			}
 		}
 		catch(Exception $ex)
 		{
 			$this->LastError[] = $ex->getMessage();
-			return NULL;
+			return false;
 		}
 	}
 	
@@ -542,7 +570,7 @@ class SQLi
 				if(!$result)
 					return false;
 				else
-					return true;
+					return $result;
 			}
 			else
 				return false;
@@ -550,7 +578,7 @@ class SQLi
 		catch(Exception $ex)
 		{
 			$this->LastError[] = $ex->getMessage();
-			return NULL;
+			return false;
 		}
 	}
 	
@@ -571,6 +599,11 @@ class SQLi
 			if($this->DBobj)
 			{
 				$stmt = mysqli_prepare($this->DBobj,$sql);
+				if($stmt === false)
+				{
+					$this->LastError[] = "Prepare error";
+					return false;
+				}
 				$params = array();
 				$types  = array_reduce($vars, function ($string, &$arg) use (&$params) {
 					$params[] = &$arg;
@@ -582,27 +615,31 @@ class SQLi
 				}, '');
 				array_unshift($params , $types);
 				array_unshift($params , $stmt);
-				call_user_func_array("mysqli_stmt_bind_param",$params);
+				//@ call_user_func_array("mysqli_stmt_bind_param",$params);
+				mysqli_stmt_bind_param($stmt,$types,...array_values($vars));
 				mysqli_stmt_execute($stmt);
-				if(function_exists('mysqli_stmt_get_result'))
-					@ $result = mysqli_stmt_get_result($stmt);
-				else
-					@ $result = $this->mysqlo_stmt_get_result($stmt);
-				@ mysqli_stmt_free_result($stmt);
-				@ mysqli_free_result($result);
-				mysqli_stmt_close($stmt);
-				if(!isset($result))
+				if(mysqli_stmt_affected_rows($stmt) <= 0)
+				{
+					@ mysqli_stmt_free_result($stmt);
+					mysqli_stmt_close($stmt);
 					return false;
+				}
 				else
+				{
+					@ mysqli_stmt_free_result($stmt);
+					mysqli_stmt_close($stmt);
 					return true;
+				}
 			}
 			else
+			{
 				return false;
+			}
 		}
 		catch(Exception $ex)
 		{
 			$this->LastError[] = $ex->getMessage();
-			return NULL;
+			return false;
 		}
 	}
 	
@@ -620,15 +657,17 @@ class SQLi
 				if(!$result)
 					return false;
 				else
-					return true;
+					return $result;
 			}
 			else
+			{
 				return false;
+			}
 		}
 		catch(Exception $ex)
 		{
 			$this->LastError[] = $ex->getMessage();
-			return NULL;
+			return false;
 		}
 	}
 	
@@ -647,6 +686,11 @@ class SQLi
 			if($this->DBobj)
 			{
 				$stmt = mysqli_prepare($this->DBobj,$sql);
+				if($stmt === false)
+				{
+					$this->LastError[] = "Prepare error";
+					return false;
+				}
 				$params = array();
 				$types  = array_reduce($vars, function ($string, &$arg) use (&$params) {
 					$params[] = &$arg;
@@ -658,27 +702,31 @@ class SQLi
 				}, '');
 				array_unshift($params , $types);
 				array_unshift($params , $stmt);
-				call_user_func_array("mysqli_stmt_bind_param",$params);
+				//@ call_user_func_array("mysqli_stmt_bind_param",$params);
+				mysqli_stmt_bind_param($stmt,$types,...array_values($vars));
 				mysqli_stmt_execute($stmt);
-				if(function_exists('mysqli_stmt_get_result'))
-					@ $result = mysqli_stmt_get_result($stmt);
-				else
-					@ $result = $this->mysqlo_stmt_get_result($stmt);
-				@ mysqli_stmt_free_result($stmt);
-				@ mysqli_free_result($result);
-				mysqli_stmt_close($stmt);
-				if(!isset($result))
+				if(mysqli_stmt_affected_rows($stmt) <= 0)
+				{
+					@ mysqli_stmt_free_result($stmt);
+					mysqli_stmt_close($stmt);
 					return false;
+				}
 				else
+				{
+					@ mysqli_stmt_free_result($stmt);
+					mysqli_stmt_close($stmt);
 					return true;
+				}
 			}
 			else
+			{
 				return false;
+			}
 		}
 		catch(Exception $ex)
 		{
 			$this->LastError[] = $ex->getMessage();
-			return NULL;
+			return false;
 		}
 	}
 	
@@ -705,15 +753,17 @@ class SQLi
 				if(!$result)
 					return false;
 				else
-					return true;
+					return $result;
 			}
 			else
+			{
 				return false;
+			}
 		}
 		catch(Exception $ex)
 		{
 			$this->LastError[] = $ex->getMessage();
-			return NULL;
+			return false;
 		}
 	}
 	
@@ -737,6 +787,11 @@ class SQLi
 			if($this->DBobj)
 			{
 				$stmt = mysqli_prepare($this->DBobj,$sql);
+				if($stmt === false)
+				{
+					$this->LastError[] = "Prepare error";
+					return false;
+				}
 				$params = array();
 				$types  = array_reduce($vars, function ($string, &$arg) use (&$params) {
 					$params[] = &$arg;
@@ -748,27 +803,31 @@ class SQLi
 				}, '');
 				array_unshift($params , $types);
 				array_unshift($params , $stmt);
-				call_user_func_array("mysqli_stmt_bind_param",$params);
+				//@ call_user_func_array("mysqli_stmt_bind_param",$params);
+				mysqli_stmt_bind_param($stmt,$types,...array_values($vars));
 				mysqli_stmt_execute($stmt);
-				if(function_exists('mysqli_stmt_get_result'))
-					@ $result = mysqli_stmt_get_result($stmt);
-				else
-					@ $result = $this->mysqlo_stmt_get_result($stmt);
-				@ mysqli_stmt_free_result($stmt);
-				@ mysqli_free_result($result);
-				mysqli_stmt_close($stmt);
-				if(!isset($result))
+				if(mysqli_stmt_affected_rows($stmt) <= 0)
+				{
+					@ mysqli_stmt_free_result($stmt);
+					mysqli_stmt_close($stmt);
 					return false;
+				}
 				else
+				{
+					@ mysqli_stmt_free_result($stmt);
+					mysqli_stmt_close($stmt);
 					return true;
+				}
 			}
 			else
+			{
 				return false;
+			}	
 		}
 		catch(Exception $ex)
 		{
 			$this->LastError[] = $ex->getMessage();
-			return NULL;
+			return false;
 		}
 	}
 
@@ -785,10 +844,12 @@ class SQLi
 				if(!$result)
 					return false;
 				else
-					return true;
+					return $result;
 			}
 			else
+			{
 				return null;
+			}
 		}
 		catch(Exception $ex)
 		{
@@ -810,15 +871,17 @@ class SQLi
 				if(!$result)
 					return false;
 				else
-					return true;
+					return $result;
 			}
 			else
-				return null;
+			{
+				return false;
+			}
 		}
 		catch(Exception $ex)
 		{
 			$this->LastError[] = $ex->getMessage();
-			return NULL;
+			return false;
 		}
 	}
 
@@ -835,7 +898,9 @@ class SQLi
 				return $result;
 			}
 			else
+			{
 				return null;
+			}
 		}
 		catch(Exception $ex)
 		{
@@ -857,7 +922,9 @@ class SQLi
 				return $result;
 			}
 			else
+			{
 				return null;
+			}
 		}
 		catch(Exception $ex)
 		{
@@ -876,6 +943,11 @@ class SQLi
 			if($this->DBobj)
 			{
 				$stmt = mysqli_prepare($this->DBobj,$sql);
+				if($stmt === false)
+				{
+					$this->LastError[] = "Prepare error";
+					return false;
+				}
 				$params = array();
 				$types  = array_reduce($vars, function ($string, &$arg) use (&$params) {
 					$params[] = &$arg;
@@ -887,8 +959,10 @@ class SQLi
 				}, '');
 				array_unshift($params , $types);
 				array_unshift($params , $stmt);
-				call_user_func_array("mysqli_stmt_bind_param",$params);
-				mysqli_stmt_execute($stmt);
+				//@ call_user_func_array("mysqli_stmt_bind_param",$params);
+				mysqli_stmt_bind_param($stmt,$types,...array_values($vars));
+				if(! mysqli_stmt_execute($stmt))
+					return false;
 				if(function_exists('mysqli_stmt_get_result'))
 					@ $result = mysqli_stmt_get_result($stmt);
 				else
@@ -899,7 +973,9 @@ class SQLi
 				return $result;
 			}
 			else
-				return null;
+			{
+				return false;
+			}
 		}
 		catch(Exception $ex)
 		{
