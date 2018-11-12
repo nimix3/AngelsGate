@@ -27,7 +27,7 @@ class CryptoEx
 		try{
 			if(!isset($PUBKEY) or empty($PUBKEY))
 				$PUBKEY = $this->PUBKEY;
-			$rsa = new \Crypt_RSA();
+			$rsa = new Crypt_RSA();
 			$rsa->setEncryptionMode(1);
 			$rsa->setMGFHash('sha1');
 			$rsa->setHash('sha256');
@@ -45,7 +45,7 @@ class CryptoEx
 		try{
 			if(!isset($PRVKEY) or empty($PRVKEY))
 				$PRVKEY = $this->PRVKEY;
-			$rsa = new \Crypt_RSA();
+			$rsa = new Crypt_RSA();
 			$rsa->setEncryptionMode(1);
 			$rsa->setMGFHash('sha1');
 			$rsa->setHash('sha256');
@@ -63,7 +63,7 @@ class CryptoEx
 		if(intval($keysize) < 1024 or intval($keysize) > 4096)
 			$keysize = 4096;
 		try{
-			$rsa = new \Crypt_RSA();
+			$rsa = new Crypt_RSA();
 			$rsa->setHash('sha512');
 			$rsa->setComment('nocomment');
 			$keys = $rsa->createKey($keysize);
@@ -159,7 +159,7 @@ class CryptoEx
 	public function HighRandomString($Length=8)
 	{
 		try{
-			$rsa = new \Crypt_RSA();
+			$rsa = new Crypt_RSA();
 			return $rsa->crypt_random_string($Length);
 		}
 		catch(Exception $ex){
