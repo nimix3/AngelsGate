@@ -2,7 +2,7 @@
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/29b672567d994f418bddeab7d4db0660)](https://www.codacy.com/app/nimix3/AngelsGate?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nimix3/AngelsGate&amp;utm_campaign=Badge_Grade)
 [![Telegram group](https://img.shields.io/badge/TELEGRAM-GROUP-green.svg)](https://t.me/joinchat/BjokYUiYV6gK9FCUNiB7lw)
-[![GitHub](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/nimix3/Venus/blob/master/LICENSE)
+[![GitHub](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/nimix3/AngelsGate/blob/master/LICENSE)
 
 AngelsGate high secure communication protocol for cloud-fog data transmissions.
 
